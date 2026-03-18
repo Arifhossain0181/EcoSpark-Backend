@@ -40,7 +40,7 @@ export const getAllIdeas = async (query: IdeaQuery) => {
 					select: {
 						id: true,
 						name: true,
-						avatarUrl: true,
+            avatar: true,
 					},
 				},
 				category: true,
@@ -70,13 +70,13 @@ export const getIdeaById = async (id: string) => {
         select: {
           id: true,
           name: true,
-          avatarUrl: true,
+	          avatar: true,
         },
       },
       category: true,
       _count: {
         select: {
-          upvotes: true,
+	          votes: true,
           comments: true,
         },
       },
@@ -151,7 +151,7 @@ export const getmyIdeas = async(authorId:string)=>{
             category:true,
             _count:{
                 select:{
-                    upvotes:true,
+	                votes:true,
                     comments:true
                 }
             }
