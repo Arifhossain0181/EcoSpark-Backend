@@ -4,62 +4,62 @@ import { prisma } from "../../config/Prisma";
 import { Status } from "../../generated/prisma/enums";
 
 export const getAllIdeas = async (query: IdeaQuery) => {
-  const { search, category, isPaid, sort, page = "1", limit = "10" } = query;
+	const { search, category, isPaid, sort, page = "1", limit = "10" } = query;
 
-  const where: any = { status: Status.APPROVED };
+	const where: any = { status: Status.APPROVED };
   if (search) {
-    where.OR = [
-      { title: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-    ];
+		where.OR = [
+			{ title: { contains: search, mode: "insensitive" } },
+			{ description: { contains: search, mode: "insensitive" } },
+		];
   }
   if (category) {
-    where.category = category;
+		where.category = { name: category };
   }
   if (isPaid) {
-    where.isPaid = isPaid === "true";
+		where.isPaid = isPaid === "true";
   }
-  const oderBy: any =
-    sort === "recent"
-      ? { createdAt: "desc" }
-      : sort === "top"
-        ? { upvotes: "desc" }
-        : sort === "commented"
-          ? { comments: { _count: "desc" } }
-          : { createdAt: "desc" };
-  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const orderBy: any =
+		sort === "recent"
+			? { createdAt: "desc" }
+			: sort === "top"
+				? { votes: { _count: "desc" } }
+				: sort === "commented"
+					? { comments: { _count: "desc" } }
+					: { createdAt: "desc" };
+	const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  const [ideas, total] = await Promise.all([
-    prisma.idea.findMany({
-      where,
-      orderBy: oderBy,
-      skip,
-      take: parseInt(limit),
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            avatarUrl: true,
-          },
-        },
-        category: true,
-        _count: {
-          select: {
-            upvotes: true,
-            comments: true,
-          },
-        },
-      },
-    }),
-    prisma.idea.count({ where }),
-  ]);
-  return {
-    ideas,
-    total,
-    page: Math.ceil(total / parseInt(limit)),
-    limit: parseInt(limit),
-  };
+	const [ideas, total] = await Promise.all([
+		prisma.idea.findMany({
+			where,
+			orderBy,
+			skip,
+			take: parseInt(limit),
+			include: {
+				author: {
+					select: {
+						id: true,
+						name: true,
+						avatarUrl: true,
+					},
+				},
+				category: true,
+				_count: {
+					select: {
+						votes: true,
+						comments: true,
+					},
+				},
+			},
+		}),
+		prisma.idea.count({ where }),
+	]);
+	return {
+		ideas,
+		total,
+		page: Math.ceil(total / parseInt(limit)),
+		limit: parseInt(limit),
+	};
 };
 
 export const getIdeaById = async (id: string) => {
@@ -127,8 +127,8 @@ export const uPdateIdea = async (id: string, data: any, userId: string) => {
     const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
     if (!idea) throw new Error("Idea not found");
     if (idea.authorId !== userId) throw new Error("Unauthorized");
-    if (idea.status === Status.APPROVED || idea.status === Status.DRAFT)
-      throw new Error("Only draft or rejected ideas can be updated");
+    if (idea.status !== Status.DRAFT && idea.status !== Status.REJECTED)
+			throw new Error("Only draft or rejected ideas can be updated");
     return await prisma.idea.update({
       where: { id },
       data

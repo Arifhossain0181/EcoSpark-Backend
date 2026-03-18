@@ -49,19 +49,25 @@ export const submitIdea = async (req: AuthRequest, res: Response ,): Promise<voi
     }
 }
 
-export const uPdateIdea = async (req: AuthRequest, res: Response) : Promise<void> => {
-    try{
+export const uPdateIdea = async (
+    req: AuthRequest,
+    res: Response
+): Promise<void> => {
+    try {
         const id = req.params.id;
         const data = req.body;
         const userId = req.user!.id as string;
         const idea = await ideaService.uPdateIdea(id as string, data, userId);
-        res.json(idea );
+        res.json(idea);
     } catch (error) {
-}   
         res.status(500).json({
-            message:error instanceof Error ? error.message : "An error occurred is not UPdateIdea",
-        })
+            message:
+                error instanceof Error
+                    ? error.message
+                    : "An error occurred while updating the idea",
+        });
     }
+};
 export const deleteIdea = async (req: AuthRequest, res: Response) : Promise<void> => {
     try{
         const id = req.params.id;
