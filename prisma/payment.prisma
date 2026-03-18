@@ -1,0 +1,11 @@
+model Payment {
+  id        String        @id @default(uuid())
+  userId    String
+  ideaId    String
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  tranId    String?       @unique
+  user      User          @relation(fields:[userId], references:[id])
+  idea      Idea          @relation(fields:[ideaId], references:[id])
+  createdAt DateTime      @default(now())
+}

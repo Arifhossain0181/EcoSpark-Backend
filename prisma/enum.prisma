@@ -1,0 +1,22 @@
+enum Role {
+	MEMBER
+	ADMIN
+}
+
+enum Status {
+	DRAFT
+	UNDER_REVIEW
+	APPROVED
+	REJECTED
+}
+
+enum VoteType {
+	UP
+	DOWN
+}
+
+enum PaymentStatus {
+	PENDING
+	SUCCESS
+	FAILED
+}

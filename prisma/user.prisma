@@ -1,0 +1,16 @@
+model User {
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  password     String
+  role         Role        @default(MEMBER)
+  isActive     Boolean     @default(true)
+  avatar       String?
+  ideas        Idea[]
+  votes        Vote[]
+  comments     Comment[]
+  reviews      Review[]
+  watchlist    Watchlist[]
+  payments     Payment[]
+  createdAt    DateTime    @default(now())
+}

@@ -1,0 +1,22 @@
+model Idea {
+  id            String      @id @default(uuid())
+  title         String
+  problem       String
+  solution      String
+  description   String
+  images        String[]
+  isPaid        Boolean     @default(false)
+  price         Float       @default(0)
+  status        Status      @default(DRAFT)
+  adminFeedback String?
+  categoryId    String
+  authorId      String
+  author        User        @relation(fields:[authorId], references:[id])
+  category      Category    @relation(fields:[categoryId], references:[id])
+  votes         Vote[]
+  comments      Comment[]
+  reviews       Review[]
+  watchlist     Watchlist[]
+  payments      Payment[]
+  createdAt     DateTime    @default(now())
+}

@@ -1,0 +1,9 @@
+model Vote {
+  id     String   @id @default(uuid())
+  type   VoteType
+  userId String
+  ideaId String
+  user   User     @relation(fields:[userId], references:[id])
+  idea   Idea     @relation(fields:[ideaId], references:[id])
+  @@unique([userId, ideaId])
+}
