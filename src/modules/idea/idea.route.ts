@@ -1,0 +1,15 @@
+import { Router } from 'express'
+import { authMiddleware,} from '../../middleware/auth.middleware'
+import * as ideaController from './ideas.controller'
+
+const router = Router()
+
+router.get('/',              ideaController.getAllIdeas)
+router.get('/my',   authMiddleware, ideaController.getMyIdeas)
+router.get('/:id',           ideaController.getIdeaById)
+router.post('/',    authMiddleware, ideaController.createIdea)
+router.patch('/:id/submit', authMiddleware, ideaController.submitIdea)
+router.patch('/:id',  authMiddleware, ideaController.uPdateIdea)
+router.delete('/:id', authMiddleware, ideaController.deleteIdea)
+
+export default router
