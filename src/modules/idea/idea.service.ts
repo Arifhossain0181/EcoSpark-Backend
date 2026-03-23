@@ -4,9 +4,14 @@ import { prisma } from "../../config/Prisma";
 import { Status } from "../../generated/prisma/enums";
 
 export const getAllIdeas = async (query: IdeaQuery) => {
-	const { search, category, isPaid, sort, page = "1", limit = "10" } = query;
+  const { search, category, isPaid, sort, page = "1", limit = "10" } = query;
 
-	const where: any = { status: Status.APPROVED };
+  // For now, show both DRAFT and APPROVED ideas in the main list
+  const where: any = {
+    status: {
+      in: [Status.DRAFT, Status.APPROVED],
+    },
+  };
   if (search) {
 		where.OR = [
 			{ title: { contains: search, mode: "insensitive" } },
