@@ -45,7 +45,7 @@ export const initPayment = async (userId: string, ideaId: string) => {
         },
     });
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session (use USD to avoid too-small-amount errors)
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
@@ -58,8 +58,8 @@ export const initPayment = async (userId: string, ideaId: string) => {
         line_items: [
             {
                 price_data: {
-                    currency: "bdt",
-                    unit_amount: Math.round(idea.price * 100),
+                    currency: "usd",
+                    unit_amount: Math.round(idea.price * 100), // cents
                     product_data: {
                         name: idea.title,
                         description: idea.description,
