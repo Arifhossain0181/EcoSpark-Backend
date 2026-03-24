@@ -6,38 +6,43 @@ export const getcomments = async (ideaId) => {
             user: {
                 select: {
                     name: true,
-                    avatarUrl: true,
-                }
+                    avatar: true,
+                },
             },
             replies: {
                 include: {
                     user: {
                         select: {
                             name: true,
-                        }
-                    }
-                }
-            }
+                            avatar: true,
+                        },
+                    },
+                },
+            },
         },
         orderBy: {
-            createdAt: "desc"
-        }
+            createdAt: "desc",
+        },
     });
 };
 export const addComment = async (ideaId, userId, text, parentId) => {
-    const commentcreate = await prisma.comment.create({
+    const comment = await prisma.comment.create({
         data: {
-            text, userId, ideaId, parentId: parentId || null
+            text,
+            userId,
+            ideaId,
+            parentId: parentId || null,
         },
         include: {
             user: {
                 select: {
                     name: true,
-                    avatarUrl: true,
-                }
-            }
-        }
+                    avatar: true,
+                },
+            },
+        },
     });
+    return comment;
 };
 export const deleteComment = async (commentId, userId, role) => {
     const commentfind = await prisma.comment.findUnique({

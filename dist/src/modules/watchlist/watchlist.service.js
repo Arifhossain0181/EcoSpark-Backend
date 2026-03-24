@@ -14,7 +14,7 @@ export const toggleWatchlist = async (ideaId, userId) => {
         });
         return { message: "Removed from watchlist" };
     }
-    else {
+    try {
         await prisma.watchlist.create({
             data: {
                 userId,
@@ -22,6 +22,25 @@ export const toggleWatchlist = async (ideaId, userId) => {
             },
         });
         return { message: "Added to watchlist" };
+    }
+    catch (error) {
+        const err = error;
+        // Handle rare race condition: record created between findUnique and create
+        if (err.code === "P2002") {
+            const again = await prisma.watchlist.findUnique({
+                where: {
+                    userId_ideaId: {
+                        userId,
+                        ideaId,
+                    },
+                },
+            });
+            if (again) {
+                await prisma.watchlist.delete({ where: { id: again.id } });
+                return { message: "Removed from watchlist" };
+            }
+        }
+        throw error;
     }
 };
 export const getwatchlist = async (userId) => {
