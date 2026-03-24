@@ -159,4 +159,27 @@ export const checkAccess = async (ideaId: string, userId: string) => {
     return { hasAccess: !!payment, message: payment ? "Access granted" : "Access denied. Please purchase to view this idea." };
 }
 
+export const getAllPaymentsForAdmin = async () => {
+    const payments = await prisma.payment.findMany({
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true,
+                },
+            },
+            idea: {
+                select: {
+                    title: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    return payments;
+}
+
 

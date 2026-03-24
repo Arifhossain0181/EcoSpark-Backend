@@ -66,3 +66,26 @@ export const deleteComment = async (commentId: string, userId: string ,role: str
         where:{ id: commentId }
     })
 }
+
+export const getAllCommentsForAdmin = async () => {
+    return await prisma.comment.findMany({
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
+                },
+            },
+            idea: {
+                select: {
+                    id: true,
+                    title: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+}

@@ -4,6 +4,7 @@ import {
     getcomments,
     addComment as addCommentService,
     deleteComment as deleteCommentService,
+    getAllCommentsForAdmin,
 } from "./comment.service";
 
 export const getComments = async (req: AuthRequest, res: Response) => {
@@ -40,5 +41,20 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
         res.json({ message: "Comment deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: (error as Error).message });
+    }
+}
+
+export const getAllCommentsAdmin = async (req: AuthRequest, res: Response) => {
+    try {
+        const comments = await getAllCommentsForAdmin();
+        res.json({
+            success: true,
+            data: comments,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: (error as Error).message || "Failed to fetch comments",
+        });
     }
 }

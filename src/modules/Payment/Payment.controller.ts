@@ -54,3 +54,22 @@ export const checkAccess = async (
         res.status(400).json({ message: error.message });
     }
 };
+
+export const getAllPaymentsForAdmin = async (
+    req: AuthRequest,
+    res: Response,
+): Promise<void> => {
+    try {
+        const result = await paymentService.getAllPaymentsForAdmin();
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to fetch payments";
+        res.status(500).json({
+            success: false,
+            message,
+        });
+    }
+};
