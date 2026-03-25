@@ -14,7 +14,9 @@ export const addreview = async (req: AuthRequest, res: Response) => {
         const result = await addreviewService(ideaId, userId, rating, comment);
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        const message = (error as Error).message;
+        const status = message === "You have already reviewed this idea" ? 409 : 500;
+        res.status(status).json({ message });
     }
 };
 
@@ -26,7 +28,11 @@ export const uPdateReview = async (req: AuthRequest, res: Response) => {
         const result = await uPdateReviewService(id, userId, data);
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        const message = (error as Error).message;
+        let status = 500;
+        if (message === "Review not found") status = 404;
+        if (message === "You can only update your own review") status = 403;
+        res.status(status).json({ message });
     }
 };
 
@@ -37,6 +43,10 @@ export const deleteReview = async (req: AuthRequest, res: Response) => {
         const result = await deleteReviewService(id, userId);
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        const message = (error as Error).message;
+        let status = 500;
+        if (message === "Review not found") status = 404;
+        if (message === "You can only delete your own review") status = 403;
+        res.status(status).json({ message });
     }
 };
