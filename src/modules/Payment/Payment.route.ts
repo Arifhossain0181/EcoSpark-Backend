@@ -15,6 +15,7 @@ router.post(
 router.post('/init',          authMiddleware, paymentController.initPayment);
 router.get('/verify',         authMiddleware, paymentController.verifySession);
 router.get('/access/:ideaId', authMiddleware, paymentController.checkAccess);
+router.get('/my-ideas',       authMiddleware, paymentController.getMyPurchasedIdeas);
 router.get('/admin',          authMiddleware, adminOnly, paymentController.getAllPaymentsForAdmin);
 
 export default router;

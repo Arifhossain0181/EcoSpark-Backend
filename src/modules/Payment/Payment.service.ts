@@ -191,4 +191,68 @@ export const getAllPaymentsForAdmin = async () => {
     return payments;
 }
 
+export const getMyPurchasedIdeas = async (userId: string) => {
+    const payments = await prisma.payment.findMany({
+        where: {
+            userId,
+            status: PaymentStatus.SUCCESS,
+        },
+        include: {
+            idea: {
+                include: {
+                    category: true,
+                    _count: {
+                        select: {
+                            votes: true,
+                            comments: true,
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    const seenIdeaIds = new Set<string>();
+    const uniquePurchasedIdeas = [] as Array<{
+        id: string;
+        title: string;
+        status: string;
+        category: { id: string; name: string } | null;
+        isPaid: boolean;
+        price: number;
+        createdAt: Date;
+        purchasedAt: Date;
+        _count: { votes: number; comments: number };
+    }>;
+
+    for (const payment of payments) {
+        if (seenIdeaIds.has(payment.ideaId)) {
+            continue;
+        }
+
+        seenIdeaIds.add(payment.ideaId);
+        uniquePurchasedIdeas.push({
+            id: payment.idea.id,
+            title: payment.idea.title,
+            status: payment.idea.status,
+            category: payment.idea.category
+                ? { id: payment.idea.category.id, name: payment.idea.category.name }
+                : null,
+            isPaid: Boolean(payment.idea.isPaid),
+            price: Number(payment.idea.price ?? payment.amount ?? 0),
+            createdAt: payment.idea.createdAt,
+            purchasedAt: payment.createdAt,
+            _count: {
+                votes: payment.idea._count?.votes ?? 0,
+                comments: payment.idea._count?.comments ?? 0,
+            },
+        });
+    }
+
+    return uniquePurchasedIdeas;
+}
+
 

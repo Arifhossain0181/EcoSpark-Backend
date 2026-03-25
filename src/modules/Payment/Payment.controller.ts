@@ -73,3 +73,22 @@ export const getAllPaymentsForAdmin = async (
         });
     }
 };
+
+export const getMyPurchasedIdeas = async (
+    req: AuthRequest,
+    res: Response,
+): Promise<void> => {
+    try {
+        const result = await paymentService.getMyPurchasedIdeas(req.user!.id);
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to fetch purchased ideas";
+        res.status(500).json({
+            success: false,
+            message,
+        });
+    }
+};

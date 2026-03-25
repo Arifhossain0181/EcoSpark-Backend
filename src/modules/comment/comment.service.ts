@@ -1,7 +1,7 @@
 import { prisma } from "../../config/Prisma";
 export const getcomments = async (ideaId: string) => {
-    return await prisma.comment.findMany({
-        where: { ideaId, parentId: null },
+    const allComments = await prisma.comment.findMany({
+        where: { ideaId },
         include: {
             user: {
                 select: {
@@ -9,21 +9,34 @@ export const getcomments = async (ideaId: string) => {
                     avatar: true,
                 },
             },
-            replies: {
-                include: {
-                    user: {
-                        select: {
-                            name: true,
-                            avatar: true,
-                        },
-                    },
-                },
-            },
         },
         orderBy: {
-            createdAt: "desc",
+            createdAt: "asc",
         },
     });
+
+    type CommentNode = (typeof allComments)[number] & { replies: CommentNode[] };
+
+    const byParent = new Map<string | null, CommentNode[]>();
+
+    for (const item of allComments) {
+        const key = item.parentId ?? null;
+        const list = byParent.get(key) ?? [];
+        list.push({ ...item, replies: [] });
+        byParent.set(key, list);
+    }
+
+    const buildTree = (parentId: string | null): CommentNode[] => {
+        const nodes = byParent.get(parentId) ?? [];
+        for (const node of nodes) {
+            node.replies = buildTree(node.id);
+        }
+        return nodes;
+    };
+
+    return buildTree(null).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
 };
 
 export const addComment = async (
