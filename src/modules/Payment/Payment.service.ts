@@ -15,6 +15,10 @@ export const initPayment = async (userId: string, ideaId: string) => {
         throw new Error("Idea is free to view");
     }
 
+    if (idea.authorId === userId) {
+        throw new Error("You are the creator of this idea. Payment is not required.");
+    }
+
     const user = await prisma.user.findUnique({
         where: { id: userId },
     })
@@ -149,6 +153,11 @@ export const checkAccess = async (ideaId: string, userId: string) => {
     if(!idea.isPaid){
         return {hasAccess :true, message: "This idea is free to view"};
     }
+
+    if (idea.authorId === userId) {
+        return { hasAccess: true, message: "Access granted as the idea creator" };
+    }
+
     const payment = await prisma.payment.findFirst({
         where: {
             userId,
