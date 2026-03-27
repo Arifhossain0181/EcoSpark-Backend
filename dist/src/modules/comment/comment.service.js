@@ -1,7 +1,7 @@
 import { prisma } from "../../config/Prisma";
 export const getcomments = async (ideaId) => {
-    return await prisma.comment.findMany({
-        where: { ideaId, parentId: null },
+    const allComments = await prisma.comment.findMany({
+        where: { ideaId },
         include: {
             user: {
                 select: {
@@ -9,21 +9,26 @@ export const getcomments = async (ideaId) => {
                     avatar: true,
                 },
             },
-            replies: {
-                include: {
-                    user: {
-                        select: {
-                            name: true,
-                            avatar: true,
-                        },
-                    },
-                },
-            },
         },
         orderBy: {
-            createdAt: "desc",
+            createdAt: "asc",
         },
     });
+    const byParent = new Map();
+    for (const item of allComments) {
+        const key = item.parentId ?? null;
+        const list = byParent.get(key) ?? [];
+        list.push({ ...item, replies: [] });
+        byParent.set(key, list);
+    }
+    const buildTree = (parentId) => {
+        const nodes = byParent.get(parentId) ?? [];
+        for (const node of nodes) {
+            node.replies = buildTree(node.id);
+        }
+        return nodes;
+    };
+    return buildTree(null).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 export const addComment = async (ideaId, userId, text, parentId) => {
     const comment = await prisma.comment.create({
@@ -57,4 +62,39 @@ export const deleteComment = async (commentId, userId, role) => {
     await prisma.comment.delete({
         where: { id: commentId }
     });
+};
+export const getAllCommentsForAdmin = async (page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+    const [comments, total] = await Promise.all([
+        prisma.comment.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+                idea: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            skip,
+            take: limit,
+        }),
+        prisma.comment.count(),
+    ]);
+    return {
+        comments,
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
 };

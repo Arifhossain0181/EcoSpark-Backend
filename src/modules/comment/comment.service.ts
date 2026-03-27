@@ -80,8 +80,11 @@ export const deleteComment = async (commentId: string, userId: string ,role: str
     })
 }
 
-export const getAllCommentsForAdmin = async () => {
-    return await prisma.comment.findMany({
+export const getAllCommentsForAdmin = async (page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+        prisma.comment.findMany({
         include: {
             user: {
                 select: {
@@ -100,5 +103,17 @@ export const getAllCommentsForAdmin = async () => {
         orderBy: {
             createdAt: "desc",
         },
-    });
+            skip,
+            take: limit,
+        }),
+        prisma.comment.count(),
+    ]);
+
+    return {
+        comments,
+        total,
+        page,
+        limit,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
 }

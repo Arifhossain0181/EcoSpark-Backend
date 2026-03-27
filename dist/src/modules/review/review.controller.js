@@ -7,7 +7,9 @@ export const addreview = async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        res.status(500).json({ error: error.message });
+        const message = error.message;
+        const status = message === "You have already reviewed this idea" ? 409 : 500;
+        res.status(status).json({ message });
     }
 };
 export const uPdateReview = async (req, res) => {
@@ -19,7 +21,13 @@ export const uPdateReview = async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        res.status(500).json({ error: error.message });
+        const message = error.message;
+        let status = 500;
+        if (message === "Review not found")
+            status = 404;
+        if (message === "You can only update your own review")
+            status = 403;
+        res.status(status).json({ message });
     }
 };
 export const deleteReview = async (req, res) => {
@@ -30,6 +38,12 @@ export const deleteReview = async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        res.status(500).json({ error: error.message });
+        const message = error.message;
+        let status = 500;
+        if (message === "Review not found")
+            status = 404;
+        if (message === "You can only delete your own review")
+            status = 403;
+        res.status(status).json({ message });
     }
 };

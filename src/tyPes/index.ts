@@ -25,4 +25,5 @@ export interface IdeaQuery {
   sort?: 'recent' | 'top' | 'commented'
   page?: string
   limit?: string
+  includeTotal?: string
 }

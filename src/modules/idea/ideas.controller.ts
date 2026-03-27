@@ -2,7 +2,6 @@
 import { Request, Response } from "express";
 import { AuthRequest, IdeaQuery } from "../../tyPes";
 import * as ideaService from "./idea.service";
-import { error } from "console";
 
 export const getAllIdeas = async (req: Request, res: Response) => {
     try {
@@ -34,7 +33,8 @@ export const createIdea = async (req: Request, res: Response) => {
         const idea = await ideaService.createIdea(data, userId);
         res.status(201).json(idea);
     } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
+        const err = error as Error & { statusCode?: number };
+        res.status(err.statusCode ?? 500).json({ error: err.message });
     }
 };
 export const submitIdea = async (req: AuthRequest, res: Response ,): Promise<void> => {

@@ -1,12 +1,14 @@
 import { prisma } from "../../config/Prisma";
 import { Status } from "../../generated/prisma/enums";
+const createHttpError = (message, statusCode) => {
+    const err = new Error(message);
+    err.statusCode = statusCode;
+    return err;
+};
 export const getAllIdeas = async (query) => {
-    const { search, category, isPaid, sort, page = "1", limit = "10" } = query;
-    // For now, show both DRAFT and APPROVED ideas in the main list
+    const { search, category, isPaid, sort, page = "1", limit = "10", includeTotal = "true", } = query;
     const where = {
-        status: {
-            in: [Status.DRAFT, Status.APPROVED],
-        },
+        status: Status.APPROVED,
     };
     if (search) {
         where.OR = [
@@ -28,35 +30,36 @@ export const getAllIdeas = async (query) => {
                 ? { comments: { _count: "desc" } }
                 : { createdAt: "desc" };
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    const [ideas, total] = await Promise.all([
-        prisma.idea.findMany({
-            where,
-            orderBy,
-            skip,
-            take: parseInt(limit),
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatar: true,
-                    },
-                },
-                category: true,
-                _count: {
-                    select: {
-                        votes: true,
-                        comments: true,
-                    },
+    const shouldIncludeTotal = includeTotal !== "false";
+    const ideas = await prisma.idea.findMany({
+        where,
+        orderBy,
+        skip,
+        take: parseInt(limit),
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
                 },
             },
-        }),
-        prisma.idea.count({ where }),
-    ]);
+            category: true,
+            _count: {
+                select: {
+                    votes: true,
+                    comments: true,
+                },
+            },
+        },
+    });
+    const total = shouldIncludeTotal
+        ? await prisma.idea.count({ where })
+        : ideas.length;
     return {
         ideas,
         total,
-        page: Math.ceil(total / parseInt(limit)),
+        page: shouldIncludeTotal ? Math.ceil(total / parseInt(limit)) : 1,
         limit: parseInt(limit),
     };
 };
@@ -101,12 +104,40 @@ export const getIdeaById = async (id) => {
     return idea;
 };
 export const createIdea = async (data, authorId) => {
+    const title = typeof data.title === "string" ? data.title.trim() : "";
+    const problem = typeof data.problem === "string" ? data.problem.trim() : "";
+    const solution = typeof data.solution === "string" ? data.solution.trim() : "";
+    const description = typeof data.description === "string" ? data.description.trim() : "";
+    const categoryId = typeof data.categoryId === "string" ? data.categoryId.trim() : "";
+    if (!title || !problem || !solution || !description || !categoryId) {
+        throw createHttpError("title, problem, solution, description and categoryId are required", 400);
+    }
+    const category = await prisma.category.findUnique({ where: { id: categoryId } });
+    if (!category) {
+        throw createHttpError("Invalid categoryId", 400);
+    }
+    const normalizedImages = Array.isArray(data.images)
+        ? data.images.filter((img) => typeof img === "string" && img.trim() !== "")
+        : typeof data.image === "string" && data.image.trim()
+            ? [data.image.trim()]
+            : [];
+    const isPaid = Boolean(data.isPaid);
+    const price = Number(data.price ?? 0);
+    if (isPaid && (!Number.isFinite(price) || price <= 0)) {
+        throw createHttpError("Paid ideas must have a valid price greater than 0", 400);
+    }
     return await prisma.idea.create({
         data: {
-            ...data,
+            title,
+            problem,
+            solution,
+            description,
+            categoryId,
+            isPaid,
+            price: isPaid ? price : 0,
             authorId,
             status: Status.DRAFT,
-            images: data.images ?? (data.image ? [data.image] : []),
+            images: normalizedImages,
         },
     });
 };

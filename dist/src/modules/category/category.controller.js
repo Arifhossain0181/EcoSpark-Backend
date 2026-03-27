@@ -1,4 +1,4 @@
-import { createCategory, getCategories, deleteCategory } from "./category.service";
+import { createCategory, getCategories, deleteCategory, updateCategory } from "./category.service";
 export const createCategoryController = async (req, res) => {
     try {
         const { name } = req.body;
@@ -49,6 +49,27 @@ export const deleteCategoryController = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: error.message || "Failed to delete category",
+        });
+    }
+};
+export const updateCategoryController = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { name } = req.body;
+        if (!name) {
+            return res.status(400).json({ success: false, message: "Name is required" });
+        }
+        const result = await updateCategory(id, name);
+        return res.status(200).json({
+            success: true,
+            data: result,
+            message: "Category updated successfully",
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update category",
         });
     }
 };

@@ -12,6 +12,9 @@ export const initPayment = async (userId, ideaId) => {
     if (!idea.isPaid) {
         throw new Error("Idea is free to view");
     }
+    if (idea.authorId === userId) {
+        throw new Error("You are the creator of this idea. Payment is not required.");
+    }
     const user = await prisma.user.findUnique({
         where: { id: userId },
     });
@@ -133,6 +136,9 @@ export const checkAccess = async (ideaId, userId) => {
     if (!idea.isPaid) {
         return { hasAccess: true, message: "This idea is free to view" };
     }
+    if (idea.authorId === userId) {
+        return { hasAccess: true, message: "Access granted as the idea creator" };
+    }
     const payment = await prisma.payment.findFirst({
         where: {
             userId,
@@ -141,4 +147,74 @@ export const checkAccess = async (ideaId, userId) => {
         },
     });
     return { hasAccess: !!payment, message: payment ? "Access granted" : "Access denied. Please purchase to view this idea." };
+};
+export const getAllPaymentsForAdmin = async () => {
+    const payments = await prisma.payment.findMany({
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true,
+                },
+            },
+            idea: {
+                select: {
+                    title: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+    return payments;
+};
+export const getMyPurchasedIdeas = async (userId) => {
+    const payments = await prisma.payment.findMany({
+        where: {
+            userId,
+            status: PaymentStatus.SUCCESS,
+        },
+        include: {
+            idea: {
+                include: {
+                    category: true,
+                    _count: {
+                        select: {
+                            votes: true,
+                            comments: true,
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+    const seenIdeaIds = new Set();
+    const uniquePurchasedIdeas = [];
+    for (const payment of payments) {
+        if (seenIdeaIds.has(payment.ideaId)) {
+            continue;
+        }
+        seenIdeaIds.add(payment.ideaId);
+        uniquePurchasedIdeas.push({
+            id: payment.idea.id,
+            title: payment.idea.title,
+            status: payment.idea.status,
+            category: payment.idea.category
+                ? { id: payment.idea.category.id, name: payment.idea.category.name }
+                : null,
+            isPaid: Boolean(payment.idea.isPaid),
+            price: Number(payment.idea.price ?? payment.amount ?? 0),
+            createdAt: payment.idea.createdAt,
+            purchasedAt: payment.createdAt,
+            _count: {
+                votes: payment.idea._count?.votes ?? 0,
+                comments: payment.idea._count?.comments ?? 0,
+            },
+        });
+    }
+    return uniquePurchasedIdeas;
 };

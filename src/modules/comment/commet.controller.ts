@@ -46,7 +46,9 @@ export const deleteComment = async (req: AuthRequest, res: Response) => {
 
 export const getAllCommentsAdmin = async (req: AuthRequest, res: Response) => {
     try {
-        const comments = await getAllCommentsForAdmin();
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+        const comments = await getAllCommentsForAdmin(page, limit);
         res.json({
             success: true,
             data: comments,

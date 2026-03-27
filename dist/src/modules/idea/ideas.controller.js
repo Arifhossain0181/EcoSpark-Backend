@@ -29,7 +29,8 @@ export const createIdea = async (req, res) => {
         res.status(201).json(idea);
     }
     catch (error) {
-        res.status(500).json({ error: error.message });
+        const err = error;
+        res.status(err.statusCode ?? 500).json({ error: err.message });
     }
 };
 export const submitIdea = async (req, res) => {

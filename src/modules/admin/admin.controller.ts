@@ -4,7 +4,9 @@ import { approveIdea, deleteUser, getAllIdeas, getAllUsers, rejectIdea, getDashb
 
 export const getAllIdeasController = async (req:Request ,res:Response) => {
     try{
-        const result = await getAllIdeas();
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+        const result = await getAllIdeas(page, limit);
         res.status(200).json({
             success:true,
             data:result

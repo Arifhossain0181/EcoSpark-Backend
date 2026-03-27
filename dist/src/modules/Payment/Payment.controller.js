@@ -40,3 +40,35 @@ export const checkAccess = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+export const getAllPaymentsForAdmin = async (req, res) => {
+    try {
+        const result = await paymentService.getAllPaymentsForAdmin();
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to fetch payments";
+        res.status(500).json({
+            success: false,
+            message,
+        });
+    }
+};
+export const getMyPurchasedIdeas = async (req, res) => {
+    try {
+        const result = await paymentService.getMyPurchasedIdeas(req.user.id);
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to fetch purchased ideas";
+        res.status(500).json({
+            success: false,
+            message,
+        });
+    }
+};

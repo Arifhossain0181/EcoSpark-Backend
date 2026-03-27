@@ -1,4 +1,4 @@
-import { getcomments, addComment as addCommentService, deleteComment as deleteCommentService, } from "./comment.service";
+import { getcomments, addComment as addCommentService, deleteComment as deleteCommentService, getAllCommentsForAdmin, } from "./comment.service";
 export const getComments = async (req, res) => {
     try {
         const ideaId = req.params.ideaId;
@@ -35,5 +35,22 @@ export const deleteComment = async (req, res) => {
     }
     catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+export const getAllCommentsAdmin = async (req, res) => {
+    try {
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+        const comments = await getAllCommentsForAdmin(page, limit);
+        res.json({
+            success: true,
+            data: comments,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch comments",
+        });
     }
 };

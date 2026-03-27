@@ -1,8 +1,11 @@
 import { prisma } from "../../config/Prisma";
 import { Status } from "../../generated/prisma/enums";
 
-export const getAllIdeas = async () => {
-  const ideas = await prisma.idea.findMany({
+export const getAllIdeas = async (page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
+
+  const [ideas, total] = await Promise.all([
+    prisma.idea.findMany({
     include: {
       author: {
         select: {
@@ -22,9 +25,19 @@ export const getAllIdeas = async () => {
     orderBy: {
       createdAt: "desc",
     },
-  });
+      skip,
+      take: limit,
+    }),
+    prisma.idea.count(),
+  ]);
 
-  return ideas;
+  return {
+    ideas,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
 };
 
 export const approveIdea = async (id: string) => {
