@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "target": "es2023",
     "rootDir": "./",
     "outDir": "./dist",
@@ -9,9 +9,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "types": ["node"]
   },
-  "include": ["src", "prisma.config.ts", "seed.ts"],
+  "include": ["src", "api", "prisma.config.ts", "seed.ts"],
   "exclude": ["node_modules", "dist"]
 }

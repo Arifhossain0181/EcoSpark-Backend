@@ -181,14 +181,30 @@ var init_client = __esm({
 // src/config/Prisma.ts
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
-var connectionString, adapter, prisma;
+var prismaClient, getPrismaClient2, prisma;
 var init_Prisma = __esm({
   "src/config/Prisma.ts"() {
     "use strict";
     init_client();
-    connectionString = process.env.DATABASE_URL;
-    adapter = new PrismaPg({ connectionString });
-    prisma = new PrismaClient({ adapter });
+    prismaClient = null;
+    getPrismaClient2 = () => {
+      if (prismaClient) {
+        return prismaClient;
+      }
+      const connectionString = process.env.DATABASE_URL;
+      if (!connectionString) {
+        throw new Error("DATABASE_URL is not configured");
+      }
+      const adapter = new PrismaPg({ connectionString });
+      prismaClient = new PrismaClient({ adapter });
+      return prismaClient;
+    };
+    prisma = new Proxy({}, {
+      get(_target, property, receiver) {
+        const client = getPrismaClient2();
+        return Reflect.get(client, property, receiver);
+      }
+    });
   }
 });
 
@@ -1637,14 +1653,26 @@ var init_watchlist_route = __esm({
 
 // src/modules/Payment/Payment.service.ts
 import Stripe from "stripe";
-var stripe, initPayment, handleWebhook, verifySession, checkAccess, getAllPaymentsForAdmin, getMyPurchasedIdeas;
+var stripeClient, getStripeClient, initPayment, handleWebhook, verifySession, checkAccess, getAllPaymentsForAdmin, getMyPurchasedIdeas;
 var init_Payment_service = __esm({
   "src/modules/Payment/Payment.service.ts"() {
     "use strict";
     init_Prisma();
     init_enums();
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    stripeClient = null;
+    getStripeClient = () => {
+      if (stripeClient) {
+        return stripeClient;
+      }
+      const secretKey = process.env.STRIPE_SECRET_KEY;
+      if (!secretKey) {
+        throw new Error("STRIPE_SECRET_KEY is not configured");
+      }
+      stripeClient = new Stripe(secretKey);
+      return stripeClient;
+    };
     initPayment = async (userId, ideaId) => {
+      const stripe = getStripeClient();
       const idea = await prisma.idea.findUnique({
         where: { id: ideaId }
       });
@@ -1716,6 +1744,7 @@ var init_Payment_service = __esm({
       return { url: session.url, paymentId: payment.id };
     };
     handleWebhook = async (payload, sig) => {
+      const stripe = getStripeClient();
       let event;
       try {
         event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET);
@@ -1745,6 +1774,7 @@ var init_Payment_service = __esm({
       return { received: true };
     };
     verifySession = async (sessionId, userId) => {
+      const stripe = getStripeClient();
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       if (session.payment_status !== "paid") {
         throw new Error("Payment not processed");

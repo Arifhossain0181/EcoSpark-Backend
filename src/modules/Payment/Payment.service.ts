@@ -2,9 +2,24 @@ import Stripe from "stripe";
 import { prisma } from "../../config/Prisma";
 import { PaymentStatus } from "../../generated/prisma/enums";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+let stripeClient: Stripe | null = null;
+
+const getStripeClient = () => {
+    if (stripeClient) {
+        return stripeClient;
+    }
+
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+        throw new Error("STRIPE_SECRET_KEY is not configured");
+    }
+
+    stripeClient = new Stripe(secretKey);
+    return stripeClient;
+};
 
 export const initPayment = async (userId: string, ideaId: string) => {
+    const stripe = getStripeClient();
     const idea = await prisma.idea.findUnique({
         where: { id: ideaId },
     });
@@ -88,6 +103,7 @@ export const initPayment = async (userId: string, ideaId: string) => {
 }
 
 export const handleWebhook = async (payload: Buffer, sig: string) => {
+    const stripe = getStripeClient();
     let event: Stripe.Event;
     try{
         event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET as string);
@@ -121,6 +137,7 @@ return { received: true };
 
 //verify session for frontend
 export const verifySession = async (sessionId: string, userId: string) => {
+    const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     if(session.payment_status !== "paid"){
         throw new Error("Payment not processed");
