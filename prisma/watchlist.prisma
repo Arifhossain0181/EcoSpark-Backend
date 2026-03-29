@@ -3,6 +3,6 @@ model Watchlist {
   userId String
   ideaId String
   user   User   @relation(fields:[userId], references:[id])
-  idea   Idea   @relation(fields:[ideaId], references:[id])
+  idea   Idea   @relation(fields:[ideaId], references:[id], onDelete: Cascade)
   @@unique([userId, ideaId])
 }

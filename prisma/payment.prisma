@@ -6,6 +6,6 @@ model Payment {
   status    PaymentStatus @default(PENDING)
   tranId    String?       @unique
   user      User          @relation(fields:[userId], references:[id])
-  idea      Idea          @relation(fields:[ideaId], references:[id])
+  idea      Idea          @relation(fields:[ideaId], references:[id], onDelete: Cascade)
   createdAt DateTime      @default(now())
 }

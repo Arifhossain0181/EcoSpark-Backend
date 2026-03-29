@@ -60,11 +60,10 @@ export const uPdateIdea = async (
         const idea = await ideaService.uPdateIdea(id as string, data, userId);
         res.json(idea);
     } catch (error) {
-        res.status(500).json({
-            message:
-                error instanceof Error
-                    ? error.message
-                    : "An error occurred while updating the idea",
+        const err = error as Error & { statusCode?: number };
+        res.status(err.statusCode ?? 500).json({
+            error:
+                err.message || "An error occurred while updating the idea",
         });
     }
 };
@@ -76,8 +75,9 @@ export const deleteIdea = async (req: AuthRequest, res: Response) : Promise<void
         await ideaService.deleteIdea(id as string, userId, role);
         res.json({ message: "Idea deleted successfully" });
     } catch (error) {
-        res.status(500).json({
-            message: error instanceof Error ? error.message : "An error occurred while deleting the idea",
+        const err = error as Error & { statusCode?: number };
+        res.status(err.statusCode ?? 500).json({
+            error: err.message || "An error occurred while deleting the idea",
         });
     }
 

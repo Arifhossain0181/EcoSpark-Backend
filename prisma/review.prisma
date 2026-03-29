@@ -5,6 +5,6 @@ model Review {
   userId    String
   ideaId    String
   user      User     @relation(fields:[userId], references:[id])
-  idea      Idea     @relation(fields:[ideaId], references:[id])
+  idea      Idea     @relation(fields:[ideaId], references:[id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }

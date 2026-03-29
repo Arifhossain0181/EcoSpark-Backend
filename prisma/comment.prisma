@@ -5,8 +5,8 @@ model Comment {
   ideaId    String
   parentId  String?
   user      User      @relation(fields:[userId], references:[id])
-  idea      Idea      @relation(fields:[ideaId], references:[id])
-  parent    Comment?  @relation("replies", fields:[parentId], references:[id])
+  idea      Idea      @relation(fields:[ideaId], references:[id], onDelete: Cascade)
+  parent    Comment?  @relation("replies", fields:[parentId], references:[id], onDelete: Cascade)
   replies   Comment[] @relation("replies")
   createdAt DateTime  @default(now())
 }

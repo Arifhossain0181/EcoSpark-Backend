@@ -94,7 +94,7 @@ var config = {
   "clientVersion": "7.5.0",
   "engineVersion": "280c870be64f457428992c43c1f6d557fab6e29e",
   "activeProvider": "postgresql",
-  "inlineSchema": 'model Category {\n  id    String @id @default(uuid())\n  name  String @unique\n  ideas Idea[]\n}\n\nmodel Comment {\n  id        String    @id @default(uuid())\n  text      String\n  userId    String\n  ideaId    String\n  parentId  String?\n  user      User      @relation(fields: [userId], references: [id])\n  idea      Idea      @relation(fields: [ideaId], references: [id])\n  parent    Comment?  @relation("replies", fields: [parentId], references: [id])\n  replies   Comment[] @relation("replies")\n  createdAt DateTime  @default(now())\n}\n\nenum Role {\n  MEMBER\n  ADMIN\n}\n\nenum Status {\n  DRAFT\n  UNDER_REVIEW\n  APPROVED\n  REJECTED\n}\n\nenum VoteType {\n  UP\n  DOWN\n}\n\nenum PaymentStatus {\n  PENDING\n  SUCCESS\n  FAILED\n}\n\nmodel Idea {\n  id            String      @id @default(uuid())\n  title         String\n  problem       String\n  solution      String\n  description   String\n  images        String[]\n  isPaid        Boolean     @default(false)\n  price         Float       @default(0)\n  status        Status      @default(DRAFT)\n  adminFeedback String?\n  categoryId    String\n  authorId      String\n  author        User        @relation(fields: [authorId], references: [id])\n  category      Category    @relation(fields: [categoryId], references: [id])\n  votes         Vote[]\n  comments      Comment[]\n  reviews       Review[]\n  watchlist     Watchlist[]\n  payments      Payment[]\n  createdAt     DateTime    @default(now())\n}\n\nmodel Payment {\n  id        String        @id @default(uuid())\n  userId    String\n  ideaId    String\n  amount    Float\n  status    PaymentStatus @default(PENDING)\n  tranId    String?       @unique\n  user      User          @relation(fields: [userId], references: [id])\n  idea      Idea          @relation(fields: [ideaId], references: [id])\n  createdAt DateTime      @default(now())\n}\n\nmodel Review {\n  id        String   @id @default(uuid())\n  rating    Int\n  comment   String\n  userId    String\n  ideaId    String\n  user      User     @relation(fields: [userId], references: [id])\n  idea      Idea     @relation(fields: [ideaId], references: [id])\n  createdAt DateTime @default(now())\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nmodel User {\n  id        String      @id @default(uuid())\n  name      String\n  email     String      @unique\n  password  String\n  role      Role        @default(MEMBER)\n  isActive  Boolean     @default(true)\n  avatar    String?\n  ideas     Idea[]\n  votes     Vote[]\n  comments  Comment[]\n  reviews   Review[]\n  watchlist Watchlist[]\n  payments  Payment[]\n  createdAt DateTime    @default(now())\n}\n\nmodel Vote {\n  id     String   @id @default(uuid())\n  type   VoteType\n  userId String\n  ideaId String\n  user   User     @relation(fields: [userId], references: [id])\n  idea   Idea     @relation(fields: [ideaId], references: [id])\n\n  @@unique([userId, ideaId])\n}\n\nmodel Watchlist {\n  id     String @id @default(uuid())\n  userId String\n  ideaId String\n  user   User   @relation(fields: [userId], references: [id])\n  idea   Idea   @relation(fields: [ideaId], references: [id])\n\n  @@unique([userId, ideaId])\n}\n',
+  "inlineSchema": 'model Category {\n  id    String @id @default(uuid())\n  name  String @unique\n  ideas Idea[]\n}\n\nmodel Comment {\n  id        String    @id @default(uuid())\n  text      String\n  userId    String\n  ideaId    String\n  parentId  String?\n  user      User      @relation(fields: [userId], references: [id])\n  idea      Idea      @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  parent    Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)\n  replies   Comment[] @relation("replies")\n  createdAt DateTime  @default(now())\n}\n\nenum Role {\n  MEMBER\n  ADMIN\n}\n\nenum Status {\n  DRAFT\n  UNDER_REVIEW\n  APPROVED\n  REJECTED\n}\n\nenum VoteType {\n  UP\n  DOWN\n}\n\nenum PaymentStatus {\n  PENDING\n  SUCCESS\n  FAILED\n}\n\nmodel Idea {\n  id            String      @id @default(uuid())\n  title         String\n  problem       String\n  solution      String\n  description   String\n  images        String[]\n  isPaid        Boolean     @default(false)\n  price         Float       @default(0)\n  status        Status      @default(DRAFT)\n  adminFeedback String?\n  categoryId    String\n  authorId      String\n  author        User        @relation(fields: [authorId], references: [id])\n  category      Category    @relation(fields: [categoryId], references: [id])\n  votes         Vote[]\n  comments      Comment[]\n  reviews       Review[]\n  watchlist     Watchlist[]\n  payments      Payment[]\n  createdAt     DateTime    @default(now())\n}\n\nmodel Payment {\n  id        String        @id @default(uuid())\n  userId    String\n  ideaId    String\n  amount    Float\n  status    PaymentStatus @default(PENDING)\n  tranId    String?       @unique\n  user      User          @relation(fields: [userId], references: [id])\n  idea      Idea          @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime      @default(now())\n}\n\nmodel Review {\n  id        String   @id @default(uuid())\n  rating    Int\n  comment   String\n  userId    String\n  ideaId    String\n  user      User     @relation(fields: [userId], references: [id])\n  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nmodel User {\n  id        String      @id @default(uuid())\n  name      String\n  email     String      @unique\n  password  String\n  role      Role        @default(MEMBER)\n  isActive  Boolean     @default(true)\n  avatar    String?\n  ideas     Idea[]\n  votes     Vote[]\n  comments  Comment[]\n  reviews   Review[]\n  watchlist Watchlist[]\n  payments  Payment[]\n  createdAt DateTime    @default(now())\n}\n\nmodel Vote {\n  id     String   @id @default(uuid())\n  type   VoteType\n  userId String\n  ideaId String\n  user   User     @relation(fields: [userId], references: [id])\n  idea   Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n\nmodel Watchlist {\n  id     String @id @default(uuid())\n  userId String\n  ideaId String\n  user   User   @relation(fields: [userId], references: [id])\n  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n',
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -717,8 +717,9 @@ var submitIdea = async (id, userId) => {
   const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
   if (!idea) throw new Error("Idea not found");
   if (idea.authorId !== userId) throw new Error("Unauthorized");
-  if (idea.status !== Status.DRAFT && idea.status !== Status.REJECTED)
-    throw new Error("Only draft or rejected ideas can be submitted");
+  if (idea.status !== Status.DRAFT && idea.status !== Status.REJECTED && idea.status !== Status.APPROVED) {
+    throw new Error("Only draft, rejected, or approved ideas can be submitted");
+  }
   return await prisma.idea.update({
     where: { id },
     data: { status: Status.UNDER_REVIEW }
@@ -727,27 +728,138 @@ var submitIdea = async (id, userId) => {
 var uPdateIdea = async (id, data, userId) => {
   const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
   if (!idea) throw new Error("Idea not found");
-  if (idea.authorId !== userId) throw new Error("Unauthorized");
-  if (idea.status !== Status.DRAFT && idea.status !== Status.REJECTED)
-    throw new Error("Only draft or rejected ideas can be updated");
+  if (idea.authorId !== userId) throw createHttpError2("Unauthorized", 403);
+  const title = typeof data.title === "string" ? data.title.trim() : "";
+  const problem = typeof data.problem === "string" ? data.problem.trim() : "";
+  const solution = typeof data.solution === "string" ? data.solution.trim() : "";
+  const description = typeof data.description === "string" ? data.description.trim() : "";
+  const categoryId = typeof data.categoryId === "string" ? data.categoryId.trim() : "";
+  if (!title || !problem || !solution || !description || !categoryId) {
+    throw createHttpError2(
+      "title, problem, solution, description and categoryId are required",
+      400
+    );
+  }
+  const category = await prisma.category.findUnique({ where: { id: categoryId } });
+  if (!category) {
+    throw createHttpError2("Invalid categoryId", 400);
+  }
+  if (idea.isPaid) {
+    const successfulPaymentCount = await prisma.payment.count({
+      where: {
+        ideaId: id,
+        status: PaymentStatus.SUCCESS
+      }
+    });
+    if (successfulPaymentCount > 0) {
+      throw createHttpError2(
+        "This paid idea already has successful payments and cannot be edited",
+        400
+      );
+    }
+  }
+  const normalizedImages = Array.isArray(data.images) ? data.images.filter((img) => typeof img === "string" && img.trim() !== "") : [];
+  const isPaid = Boolean(data.isPaid);
+  const price = Number(data.price ?? 0);
+  if (isPaid && (!Number.isFinite(price) || price <= 0)) {
+    throw createHttpError2("Paid ideas must have a valid price greater than 0", 400);
+  }
+  const nextStatus = idea.status === Status.APPROVED ? Status.UNDER_REVIEW : idea.status;
   return await prisma.idea.update({
     where: { id },
-    data
+    data: {
+      title,
+      problem,
+      solution,
+      description,
+      categoryId,
+      isPaid,
+      price: isPaid ? price : 0,
+      images: normalizedImages,
+      status: nextStatus
+    }
   });
 };
 var deleteIdea = async (id, userId, role) => {
   const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
   if (!idea) throw new Error("Idea not found");
-  if (idea.authorId !== userId && role !== "ADMIN") throw new Error("Unauthorized");
-  return await prisma.idea.delete({
-    where: { id }
-  });
+  if (idea.authorId !== userId && role !== "ADMIN") {
+    throw createHttpError2("Unauthorized", 403);
+  }
+  if (idea.isPaid) {
+    const successfulPaymentCount = await prisma.payment.count({
+      where: {
+        ideaId: id,
+        status: PaymentStatus.SUCCESS
+      }
+    });
+    if (successfulPaymentCount > 0) {
+      throw createHttpError2(
+        "This paid idea already has successful payments and cannot be deleted",
+        400
+      );
+    }
+  }
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await tx.vote.deleteMany({ where: { ideaId: id } });
+      await tx.review.deleteMany({ where: { ideaId: id } });
+      await tx.watchlist.deleteMany({ where: { ideaId: id } });
+      await tx.payment.deleteMany({ where: { ideaId: id } });
+      await tx.comment.deleteMany({
+        where: {
+          ideaId: id,
+          parentId: { not: null }
+        }
+      });
+      await tx.comment.deleteMany({
+        where: {
+          ideaId: id,
+          parentId: null
+        }
+      });
+      return tx.idea.delete({ where: { id } });
+    });
+  } catch (error) {
+    const err = error;
+    if (err.code === "P2003") {
+      return await prisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe('DELETE FROM "Vote" WHERE "ideaId" = $1', id);
+        await tx.$executeRawUnsafe('DELETE FROM "Review" WHERE "ideaId" = $1', id);
+        await tx.$executeRawUnsafe('DELETE FROM "Watchlist" WHERE "ideaId" = $1', id);
+        await tx.$executeRawUnsafe('DELETE FROM "Payment" WHERE "ideaId" = $1', id);
+        await tx.comment.deleteMany({
+          where: {
+            ideaId: id,
+            parentId: { not: null }
+          }
+        });
+        await tx.comment.deleteMany({
+          where: {
+            ideaId: id,
+            parentId: null
+          }
+        });
+        return tx.idea.delete({ where: { id } });
+      });
+    }
+    throw error;
+  }
 };
 var getmyIdeas = async (authorId) => {
   return await prisma.idea.findMany({
     where: { authorId },
     include: {
       category: true,
+      payments: {
+        where: {
+          status: PaymentStatus.SUCCESS
+        },
+        select: {
+          id: true
+        },
+        take: 1
+      },
       _count: {
         select: {
           votes: true,
@@ -809,8 +921,9 @@ var uPdateIdea2 = async (req, res) => {
     const idea = await uPdateIdea(id, data, userId);
     res.json(idea);
   } catch (error) {
-    res.status(500).json({
-      message: error instanceof Error ? error.message : "An error occurred while updating the idea"
+    const err = error;
+    res.status(err.statusCode ?? 500).json({
+      error: err.message || "An error occurred while updating the idea"
     });
   }
 };
@@ -822,8 +935,9 @@ var deleteIdea2 = async (req, res) => {
     await deleteIdea(id, userId, role);
     res.json({ message: "Idea deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      message: error instanceof Error ? error.message : "An error occurred while deleting the idea"
+    const err = error;
+    res.status(err.statusCode ?? 500).json({
+      error: err.message || "An error occurred while deleting the idea"
     });
   }
 };
