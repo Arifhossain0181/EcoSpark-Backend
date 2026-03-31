@@ -13,13 +13,23 @@ import categoryRoutes from "./modules/category/category.route";
 import adminRoutes from "./modules/admin/admin.route";
 import watchlistRoutes from "./modules/watchlist/watchlist.route";
 import paymentRoutes from "./modules/Payment/Payment.route";
+import * as paymentController from "./modules/Payment/Payment.controller";
 
 dotenv.config();
 const app = express();
 app.use(cors());
+const PORT = process.env.PORT || 5000;
+
+// Stripe webhook needs the raw body for signature verification
+app.post(
+    "/api/payments/webhook",
+    express.raw({ type: "application/json" }),
+    paymentController.handleWebhook
+);
+
+// Standard parsers for the rest of the routes
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
-const PORT = process.env.PORT || 5000;
 
 // Root route
 app.get("/", (req, res) => {

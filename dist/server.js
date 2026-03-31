@@ -23,7 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/app.ts
-var import_express11 = __toESM(require("express"));
+var import_express10 = __toESM(require("express"));
 var import_cors = __toESM(require("cors"));
 var import_dotenv = __toESM(require("dotenv"));
 
@@ -1577,7 +1577,6 @@ var watchlist_route_default = router8;
 
 // src/modules/Payment/Payment.route.ts
 var import_express9 = require("express");
-var import_express10 = __toESM(require("express"));
 
 // src/modules/Payment/Payment.service.ts
 var import_stripe = __toESM(require("stripe"));
@@ -1877,11 +1876,6 @@ var getMyPurchasedIdeas2 = async (req, res) => {
 
 // src/modules/Payment/Payment.route.ts
 var router9 = (0, import_express9.Router)();
-router9.post(
-  "/webhook",
-  import_express10.default.raw({ type: "application/json" }),
-  handleWebhook2
-);
 router9.post("/init", authMiddleware, initPayment2);
 router9.get("/verify", authMiddleware, verifySession2);
 router9.get("/access/:ideaId", authMiddleware, checkAccess2);
@@ -1891,11 +1885,16 @@ var Payment_route_default = router9;
 
 // src/app.ts
 import_dotenv.default.config();
-var app = (0, import_express11.default)();
+var app = (0, import_express10.default)();
 app.use((0, import_cors.default)());
-app.use(import_express11.default.json({ limit: "25mb" }));
-app.use(import_express11.default.urlencoded({ extended: true, limit: "25mb" }));
 var PORT = process.env.PORT || 5e3;
+app.post(
+  "/api/payments/webhook",
+  import_express10.default.raw({ type: "application/json" }),
+  handleWebhook2
+);
+app.use(import_express10.default.json({ limit: "25mb" }));
+app.use(import_express10.default.urlencoded({ extended: true, limit: "25mb" }));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to EcoSpark API" });
 });
