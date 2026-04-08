@@ -259,7 +259,7 @@ export const uPdateIdea = async (id: string, data: any, userId: string) => {
 export const deleteIdea = async (id: string, userId: string ,role: string) => {
     const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
     if (!idea) throw new Error("Idea not found");
-    if (idea.authorId !== userId && role !== "ADMIN") {
+    if (idea.authorId !== userId && role !== "ADMIN" && role !== "MANAGER") {
       throw createHttpError("Unauthorized", 403);
     }
 

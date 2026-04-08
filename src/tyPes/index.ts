@@ -5,7 +5,7 @@ declare global {
     interface Request {
       user?: {
         id: string
-        role: 'MEMBER' | 'ADMIN'
+        role: 'MEMBER' | 'MANAGER' | 'ADMIN'
       }
     }
   }
@@ -14,7 +14,7 @@ declare global {
 export interface AuthRequest extends Request {
   user?: {
     id: string
-    role: 'MEMBER' | 'ADMIN'
+    role: 'MEMBER' | 'MANAGER' | 'ADMIN'
   }
 }
 

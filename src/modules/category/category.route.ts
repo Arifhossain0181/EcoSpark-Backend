@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware, adminOnly } from "../../middleware/auth.middleware";
+import { authMiddleware, adminOrManager } from "../../middleware/auth.middleware";
 import {
 	createCategoryController,
 	getAllCategoriesController,
@@ -9,16 +9,16 @@ import {
 
 const router = Router();
 
-// Create category (admin only)
-router.post("/", authMiddleware, adminOnly, createCategoryController);
+// Create category (admin/manager)
+router.post("/", authMiddleware, adminOrManager, createCategoryController);
 
 // Get all categories (public)
 router.get("/", getAllCategoriesController);
 
-// Delete category (admin only)
-router.delete("/:id", authMiddleware, adminOnly, deleteCategoryController);
+// Delete category (admin/manager)
+router.delete("/:id", authMiddleware, adminOrManager, deleteCategoryController);
 
-// Update category (admin only)
-router.patch("/:id", authMiddleware, adminOnly, updateCategoryController);
+// Update category (admin/manager)
+router.patch("/:id", authMiddleware, adminOrManager, updateCategoryController);
 
 export default router;

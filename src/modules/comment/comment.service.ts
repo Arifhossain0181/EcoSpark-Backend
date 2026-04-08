@@ -72,7 +72,7 @@ export const deleteComment = async (commentId: string, userId: string ,role: str
     if(!commentfind){
         throw new Error("Comment not found");
     }
-    if(commentfind.userId !== userId && role !== "ADMIN"){
+    if(commentfind.userId !== userId && role !== "ADMIN" && role !== "MANAGER"){
         throw new Error("Unauthorized");
     }
     await prisma.comment.delete({

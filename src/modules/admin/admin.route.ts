@@ -9,19 +9,19 @@ import {
   deleteUserController,
    dashboardStatsController
 } from "./admin.controller";
-import { authMiddleware, adminOnly } from "../../middleware/auth.middleware";
+import { authMiddleware, adminOnly, adminOrManager } from "../../middleware/auth.middleware";
 
 
 
 const router = express.Router();
 
-//  Dashboard (admin only)
-router.get("/dashboard", authMiddleware, adminOnly, dashboardStatsController);
+//  Dashboard (admin/manager)
+router.get("/dashboard", authMiddleware, adminOrManager, dashboardStatsController);
 
-//  Ideas management (admin only)
-router.get("/ideas", authMiddleware, adminOnly, getAllIdeasController);
-router.patch("/ideas/:id/approve", authMiddleware, adminOnly, approveIdeaController);
-router.patch("/ideas/:id/reject", authMiddleware, adminOnly, rejectIdeaController);
+//  Ideas management (admin/manager)
+router.get("/ideas", authMiddleware, adminOrManager, getAllIdeasController);
+router.patch("/ideas/:id/approve", authMiddleware, adminOrManager, approveIdeaController);
+router.patch("/ideas/:id/reject", authMiddleware, adminOrManager, rejectIdeaController);
 
 //  Users management (admin only)
 router.get("/users", authMiddleware, adminOnly, getAllUsersController);

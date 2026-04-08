@@ -10,7 +10,7 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
         return;
     }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string, role: 'MEMBER' | 'ADMIN' };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string, role: 'MEMBER' | 'MANAGER' | 'ADMIN' };
         req.user = { id: decoded.userId, role: decoded.role };
         next();
         return;
@@ -26,4 +26,12 @@ export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction): 
     }
     next();
 
+}
+
+export const adminOrManager = (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'MANAGER') {
+        res.status(403).json({ message: "Forbidden: Admins or Managers only" });
+        return;
+    }
+    next();
 }

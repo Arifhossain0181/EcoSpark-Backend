@@ -14,6 +14,7 @@ import adminRoutes from "./modules/admin/admin.route";
 import watchlistRoutes from "./modules/watchlist/watchlist.route";
 import paymentRoutes from "./modules/Payment/Payment.route";
 import statsRoutes from "./modules/stats/stats.route";
+import chatRoutes from "./modules/CHTBOT/chat.router";
 import * as paymentController from "./modules/Payment/Payment.controller";
 
 dotenv.config();
@@ -51,6 +52,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/chatbot", chatRoutes);
 
 // Protected route (requires auth)
 app.get("/api/protected", authMiddleware, (req: AuthRequest, res)=>{

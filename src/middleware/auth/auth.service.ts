@@ -3,8 +3,9 @@
 import { prisma } from '../../config/Prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
-type Role = 'MEMBER' | 'ADMIN';
+type Role = 'MEMBER' | 'MANAGER' | 'ADMIN';
 
 type TokenPayload = {
     userId: string;
@@ -29,6 +30,71 @@ const issueTokens = (payload: TokenPayload) => {
     });
 
     return { accessToken, refreshToken };
+};
+
+export const buildAuthPayload = (user: {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+}) => {
+    const { accessToken, refreshToken } = issueTokens({
+        userId: user.id,
+        role: user.role,
+    });
+
+    return {
+        accessToken,
+        refreshToken,
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        },
+    };
+};
+
+export const loginOrRegisterSocialUser = async (input: {
+    provider: 'google' | 'facebook';
+    providerId: string;
+    email?: string | null;
+    name?: string | null;
+}) => {
+    const normalizedEmail =
+        input.email?.trim().toLowerCase() ||
+        `${input.provider}_${input.providerId}@social.ecospark.local`;
+
+    const displayName = input.name?.trim() || `${input.provider} user`;
+
+    let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+
+    if (!user) {
+        const randomPassword = crypto.randomBytes(24).toString('hex');
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+        user = await prisma.user.create({
+            data: {
+                name: displayName,
+                email: normalizedEmail,
+                password: hashedPassword,
+                role: 'MEMBER',
+                isActive: true,
+            },
+        });
+    } else if (displayName && user.name !== displayName) {
+        user = await prisma.user.update({
+            where: { id: user.id },
+            data: { name: displayName },
+        });
+    }
+
+    return buildAuthPayload({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role as Role,
+    });
 };
 
 export const registerUser = async (name: string, email: string, password: string) => {
@@ -57,18 +123,12 @@ export const registerUser = async (name: string, email: string, password: string
         }
     });
 
-    const { accessToken, refreshToken } = issueTokens({ userId: user.id, role: user.role as Role });
-
-    return {
-        accessToken,
-        refreshToken,
-        user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        },
-    };
+    return buildAuthPayload({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role as Role,
+    });
 }
 export const loginUser = async (email: string, password: string) => {
     if (!email?.trim() || !password) {
@@ -85,18 +145,12 @@ export const loginUser = async (email: string, password: string) => {
         throw createHttpError('Invalid credentials', 401);
     }
 
-    const { accessToken, refreshToken } = issueTokens({ userId: user.id, role: user.role as Role });
-
-    return {
-        accessToken,
-        refreshToken,
-        user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-        },
-    };
+    return buildAuthPayload({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role as Role,
+    });
 }
 
 export const refreshAccessToken = async (refreshToken: string) => {
