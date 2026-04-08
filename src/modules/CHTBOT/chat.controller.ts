@@ -1,10 +1,27 @@
 import { Request, Response } from 'express';
 import { getChatResponse } from './chat.service.js';
+import jwt from 'jsonwebtoken';
 
 export const chatHandler = async (req: Request, res: Response) => {
-  const { message, history = [] } = req.body as {
+    const authHeader = req.headers.authorization;
+    let currentUserId: string | undefined;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId?: string };
+        if (decoded?.userId) {
+          currentUserId = decoded.userId;
+        }
+      } catch {
+        currentUserId = undefined;
+      }
+    }
+
+  const { message, history = [], projectContext } = req.body as {
     message?: string;
     history?: Array<{ role: string; content: string }>;
+    projectContext?: string;
   };
 
   if (!message || typeof message !== 'string') {
@@ -18,13 +35,25 @@ export const chatHandler = async (req: Request, res: Response) => {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    await getChatResponse(message, Array.isArray(history) ? history : [], res);
+    await getChatResponse(
+      message,
+      Array.isArray(history) ? history : [],
+      typeof projectContext === 'string' ? projectContext : '',
+      currentUserId,
+      res
+    );
   } catch (error) {
     console.error(error);
     if (!res.headersSent) {
-      res.status(500).json({ message: 'Chat request failed' });
-      return;
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
     }
+
+    res.write(
+      'data: দুঃখিত, এখন সার্ভার থেকে বিস্তারিত তথ্য আনা যাচ্ছে না। একটু পরে আবার চেষ্টা করুন।\n\n'
+    );
+    res.write('data: [DONE]\n\n');
     res.end();
   }
 };
