@@ -54,6 +54,7 @@ export const ModelName = {
   Category: 'Category',
   Comment: 'Comment',
   Idea: 'Idea',
+  IdeaInteraction: 'IdeaInteraction',
   Payment: 'Payment',
   Review: 'Review',
   User: 'User',
@@ -114,6 +115,17 @@ export const IdeaScalarFieldEnum = {
 } as const
 
 export type IdeaScalarFieldEnum = (typeof IdeaScalarFieldEnum)[keyof typeof IdeaScalarFieldEnum]
+
+
+export const IdeaInteractionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ideaId: 'ideaId',
+  type: 'type',
+  createdAt: 'createdAt'
+} as const
+
+export type IdeaInteractionScalarFieldEnum = (typeof IdeaInteractionScalarFieldEnum)[keyof typeof IdeaInteractionScalarFieldEnum]
 
 
 export const PaymentScalarFieldEnum = {

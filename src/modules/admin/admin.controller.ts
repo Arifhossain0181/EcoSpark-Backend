@@ -1,12 +1,19 @@
 import { Request, Response } from "express";
 import { approveIdea, deleteUser, getAllIdeas, getAllUsers, rejectIdea, getDashboardStats, updateUser } from "./admin.service";
+import { Status } from "../../generated/prisma/enums";
 
 
 export const getAllIdeasController = async (req:Request ,res:Response) => {
     try{
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
-        const result = await getAllIdeas(page, limit);
+        const rawSearch = String(req.query.search || "").trim();
+        const rawStatus = String(req.query.status || "").trim().toUpperCase();
+        const status = rawStatus && rawStatus in Status ? (rawStatus as Status) : undefined;
+        const result = await getAllIdeas(page, limit, {
+            search: rawSearch || undefined,
+            status,
+        });
         res.status(200).json({
             success:true,
             data:result

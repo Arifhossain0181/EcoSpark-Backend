@@ -80,11 +80,39 @@ export const deleteComment = async (commentId: string, userId: string ,role: str
     })
 }
 
-export const getAllCommentsForAdmin = async (page = 1, limit = 10) => {
+type AdminCommentFilters = {
+    search?: string;
+    type?: "MAIN" | "REPLY";
+};
+
+const buildCommentWhere = (filters: AdminCommentFilters) => {
+    const search = filters.search?.trim();
+    const where: Record<string, unknown> = {};
+
+    if (filters.type === "MAIN") {
+        where.parentId = null;
+    } else if (filters.type === "REPLY") {
+        where.parentId = { not: null };
+    }
+
+    if (search) {
+        where.OR = [
+            { text: { contains: search, mode: "insensitive" } },
+            { user: { name: { contains: search, mode: "insensitive" } } },
+            { idea: { title: { contains: search, mode: "insensitive" } } },
+        ];
+    }
+
+    return where;
+};
+
+export const getAllCommentsForAdmin = async (page = 1, limit = 10, filters: AdminCommentFilters = {}) => {
     const skip = (page - 1) * limit;
+    const where = buildCommentWhere(filters);
 
     const [comments, total] = await Promise.all([
         prisma.comment.findMany({
+        where,
         include: {
             user: {
                 select: {
@@ -106,7 +134,7 @@ export const getAllCommentsForAdmin = async (page = 1, limit = 10) => {
             skip,
             take: limit,
         }),
-        prisma.comment.count(),
+        prisma.comment.count({ where }),
     ]);
 
     return {

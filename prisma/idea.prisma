@@ -18,5 +18,6 @@ model Idea {
   reviews       Review[]
   watchlist     Watchlist[]
   payments      Payment[]
+  interactions  IdeaInteraction[]
   createdAt     DateTime    @default(now())
 }

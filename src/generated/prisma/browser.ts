@@ -33,6 +33,11 @@ export type Comment = Prisma.CommentModel
  */
 export type Idea = Prisma.IdeaModel
 /**
+ * Model IdeaInteraction
+ * 
+ */
+export type IdeaInteraction = Prisma.IdeaInteractionModel
+/**
  * Model Payment
  * 
  */

@@ -1,11 +1,31 @@
 import { prisma } from "../../config/Prisma";
 import { Status } from "../../generated/prisma/enums";
 
-export const getAllIdeas = async (page = 1, limit = 10) => {
+type AdminIdeaFilters = {
+  search?: string;
+  status?: Status;
+};
+
+export const getAllIdeas = async (page = 1, limit = 10, filters: AdminIdeaFilters = {}) => {
   const skip = (page - 1) * limit;
+  const search = filters.search?.trim();
+
+  const where = {
+    ...(filters.status ? { status: filters.status } : {}),
+    ...(search
+      ? {
+          OR: [
+            { title: { contains: search, mode: "insensitive" as const } },
+            { author: { name: { contains: search, mode: "insensitive" as const } } },
+            { category: { name: { contains: search, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
   const [ideas, total] = await Promise.all([
     prisma.idea.findMany({
+    where,
     include: {
       author: {
         select: {
@@ -28,7 +48,7 @@ export const getAllIdeas = async (page = 1, limit = 10) => {
       skip,
       take: limit,
     }),
-    prisma.idea.count(),
+    prisma.idea.count({ where }),
   ]);
 
   return {

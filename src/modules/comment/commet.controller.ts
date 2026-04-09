@@ -48,7 +48,13 @@ export const getAllCommentsAdmin = async (req: AuthRequest, res: Response) => {
     try {
         const page = Math.max(1, Number(req.query.page) || 1);
         const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
-        const comments = await getAllCommentsForAdmin(page, limit);
+        const search = String(req.query.search || "").trim();
+        const rawType = String(req.query.type || "").trim().toUpperCase();
+        const type = rawType === "MAIN" || rawType === "REPLY" ? rawType : undefined;
+        const comments = await getAllCommentsForAdmin(page, limit, {
+            search: search || undefined,
+            type,
+        });
         res.json({
             success: true,
             data: comments,

@@ -15,6 +15,7 @@ import watchlistRoutes from "./modules/watchlist/watchlist.route";
 import paymentRoutes from "./modules/Payment/Payment.route";
 import statsRoutes from "./modules/stats/stats.route";
 import chatRoutes from "./modules/CHTBOT/chat.router";
+import newsletterRoutes from "./modules/newsletter/newsletter.route";
 import { chatHandler } from "./modules/CHTBOT/chat.controller";
 import * as paymentController from "./modules/Payment/Payment.controller";
 
@@ -54,6 +55,7 @@ app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/chatbot", chatRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 app.post("/api/chat", chatHandler);
 
 // Protected route (requires auth)

@@ -200,3 +200,56 @@ export const getme = async (userId: string) => {
     }
     return user;
 }
+
+export const updateMe = async (userId: string, input: { name?: string; email?: string }) => {
+    const currentUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true },
+    });
+
+    if (!currentUser) {
+        throw createHttpError('User not found', 404);
+    }
+
+    const name = input.name?.trim();
+    const email = input.email?.trim().toLowerCase();
+
+    if (!name && !email) {
+        throw createHttpError('Name or email is required', 400);
+    }
+
+    if (name && name.length < 3) {
+        throw createHttpError('Name must be at least 3 characters long', 400);
+    }
+
+    if (email && !emailRegex.test(email)) {
+        throw createHttpError('Valid email is required', 400);
+    }
+
+    if (currentUser.role === 'ADMIN' && email && email !== currentUser.email) {
+        throw createHttpError('Admin can only change name', 403);
+    }
+
+    if (email) {
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing && existing.id !== userId) {
+            throw createHttpError('Email already in use', 409);
+        }
+    }
+
+    const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+            ...(name ? { name } : {}),
+            ...(email ? { email } : {}),
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+        },
+    });
+
+    return user;
+}

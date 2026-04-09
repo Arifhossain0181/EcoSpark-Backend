@@ -11,6 +11,7 @@
 export type * from './models/Category'
 export type * from './models/Comment'
 export type * from './models/Idea'
+export type * from './models/IdeaInteraction'
 export type * from './models/Payment'
 export type * from './models/Review'
 export type * from './models/User'

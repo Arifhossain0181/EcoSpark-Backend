@@ -6,6 +6,7 @@ import {
     loginUser,
     refreshAccessToken,
     registerUser,
+    updateMe,
 } from './auth.service';
 
 const getCookieValue = (cookieHeader: string | undefined, key: string): string | undefined => {
@@ -158,6 +159,19 @@ export const getMe = async (req: Request, res: Response) => {
         const userId = (req as any).user.id;
         const result = await getme(userId);
         res.status(200).json({ message: "User details fetched successfully", ...result });
+    } catch (error) {
+        res.status(getErrorStatus(error, 400)).json({ error: getErrorMessage(error) });
+    }
+}
+
+export const updateProfile = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const result = await updateMe(userId, {
+            name: req.body?.name,
+            email: req.body?.email,
+        });
+        res.status(200).json({ message: "Profile updated successfully", ...result });
     } catch (error) {
         res.status(getErrorStatus(error, 400)).json({ error: getErrorMessage(error) });
     }

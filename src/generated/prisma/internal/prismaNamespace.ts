@@ -387,6 +387,7 @@ export const ModelName = {
   Category: 'Category',
   Comment: 'Comment',
   Idea: 'Idea',
+  IdeaInteraction: 'IdeaInteraction',
   Payment: 'Payment',
   Review: 'Review',
   User: 'User',
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "comment" | "idea" | "payment" | "review" | "user" | "vote" | "watchlist"
+    modelProps: "category" | "comment" | "idea" | "ideaInteraction" | "payment" | "review" | "user" | "vote" | "watchlist"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -630,6 +631,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.IdeaCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.IdeaCountAggregateOutputType> | number
+        }
+      }
+    }
+    IdeaInteraction: {
+      payload: Prisma.$IdeaInteractionPayload<ExtArgs>
+      fields: Prisma.IdeaInteractionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IdeaInteractionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IdeaInteractionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        findFirst: {
+          args: Prisma.IdeaInteractionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IdeaInteractionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        findMany: {
+          args: Prisma.IdeaInteractionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>[]
+        }
+        create: {
+          args: Prisma.IdeaInteractionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        createMany: {
+          args: Prisma.IdeaInteractionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IdeaInteractionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>[]
+        }
+        delete: {
+          args: Prisma.IdeaInteractionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        update: {
+          args: Prisma.IdeaInteractionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        deleteMany: {
+          args: Prisma.IdeaInteractionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IdeaInteractionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IdeaInteractionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>[]
+        }
+        upsert: {
+          args: Prisma.IdeaInteractionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IdeaInteractionPayload>
+        }
+        aggregate: {
+          args: Prisma.IdeaInteractionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIdeaInteraction>
+        }
+        groupBy: {
+          args: Prisma.IdeaInteractionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdeaInteractionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IdeaInteractionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IdeaInteractionCountAggregateOutputType> | number
         }
       }
     }
@@ -1081,6 +1156,17 @@ export const IdeaScalarFieldEnum = {
 export type IdeaScalarFieldEnum = (typeof IdeaScalarFieldEnum)[keyof typeof IdeaScalarFieldEnum]
 
 
+export const IdeaInteractionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ideaId: 'ideaId',
+  type: 'type',
+  createdAt: 'createdAt'
+} as const
+
+export type IdeaInteractionScalarFieldEnum = (typeof IdeaInteractionScalarFieldEnum)[keyof typeof IdeaInteractionScalarFieldEnum]
+
+
 export const PaymentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -1385,6 +1471,7 @@ export type GlobalOmitConfig = {
   category?: Prisma.CategoryOmit
   comment?: Prisma.CommentOmit
   idea?: Prisma.IdeaOmit
+  ideaInteraction?: Prisma.IdeaInteractionOmit
   payment?: Prisma.PaymentOmit
   review?: Prisma.ReviewOmit
   user?: Prisma.UserOmit

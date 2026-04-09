@@ -283,6 +283,7 @@ export type IdeaWhereInput = {
   reviews?: Prisma.ReviewListRelationFilter
   watchlist?: Prisma.WatchlistListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
+  interactions?: Prisma.IdeaInteractionListRelationFilter
 }
 
 export type IdeaOrderByWithRelationInput = {
@@ -306,6 +307,7 @@ export type IdeaOrderByWithRelationInput = {
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
   watchlist?: Prisma.WatchlistOrderByRelationAggregateInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
+  interactions?: Prisma.IdeaInteractionOrderByRelationAggregateInput
 }
 
 export type IdeaWhereUniqueInput = Prisma.AtLeast<{
@@ -332,6 +334,7 @@ export type IdeaWhereUniqueInput = Prisma.AtLeast<{
   reviews?: Prisma.ReviewListRelationFilter
   watchlist?: Prisma.WatchlistListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
+  interactions?: Prisma.IdeaInteractionListRelationFilter
 }, "id">
 
 export type IdeaOrderByWithAggregationInput = {
@@ -393,6 +396,7 @@ export type IdeaCreateInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateInput = {
@@ -414,6 +418,7 @@ export type IdeaUncheckedCreateInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUpdateInput = {
@@ -435,6 +440,7 @@ export type IdeaUpdateInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateInput = {
@@ -456,6 +462,7 @@ export type IdeaUncheckedUpdateInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaCreateManyInput = {
@@ -662,6 +669,20 @@ export type EnumStatusFieldUpdateOperationsInput = {
   set?: $Enums.Status
 }
 
+export type IdeaCreateNestedOneWithoutInteractionsInput = {
+  create?: Prisma.XOR<Prisma.IdeaCreateWithoutInteractionsInput, Prisma.IdeaUncheckedCreateWithoutInteractionsInput>
+  connectOrCreate?: Prisma.IdeaCreateOrConnectWithoutInteractionsInput
+  connect?: Prisma.IdeaWhereUniqueInput
+}
+
+export type IdeaUpdateOneRequiredWithoutInteractionsNestedInput = {
+  create?: Prisma.XOR<Prisma.IdeaCreateWithoutInteractionsInput, Prisma.IdeaUncheckedCreateWithoutInteractionsInput>
+  connectOrCreate?: Prisma.IdeaCreateOrConnectWithoutInteractionsInput
+  upsert?: Prisma.IdeaUpsertWithoutInteractionsInput
+  connect?: Prisma.IdeaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IdeaUpdateToOneWithWhereWithoutInteractionsInput, Prisma.IdeaUpdateWithoutInteractionsInput>, Prisma.IdeaUncheckedUpdateWithoutInteractionsInput>
+}
+
 export type IdeaCreateNestedOneWithoutPaymentsInput = {
   create?: Prisma.XOR<Prisma.IdeaCreateWithoutPaymentsInput, Prisma.IdeaUncheckedCreateWithoutPaymentsInput>
   connectOrCreate?: Prisma.IdeaCreateOrConnectWithoutPaymentsInput
@@ -778,6 +799,7 @@ export type IdeaCreateWithoutCategoryInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutCategoryInput = {
@@ -798,6 +820,7 @@ export type IdeaUncheckedCreateWithoutCategoryInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutCategoryInput = {
@@ -863,6 +886,7 @@ export type IdeaCreateWithoutCommentsInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutCommentsInput = {
@@ -883,6 +907,7 @@ export type IdeaUncheckedCreateWithoutCommentsInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutCommentsInput = {
@@ -919,6 +944,7 @@ export type IdeaUpdateWithoutCommentsInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutCommentsInput = {
@@ -936,6 +962,107 @@ export type IdeaUncheckedUpdateWithoutCommentsInput = {
   authorId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   votes?: Prisma.VoteUncheckedUpdateManyWithoutIdeaNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
+  watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
+}
+
+export type IdeaCreateWithoutInteractionsInput = {
+  id?: string
+  title: string
+  problem: string
+  solution: string
+  description: string
+  images?: Prisma.IdeaCreateimagesInput | string[]
+  isPaid?: boolean
+  price?: number
+  status?: $Enums.Status
+  adminFeedback?: string | null
+  createdAt?: Date | string
+  author: Prisma.UserCreateNestedOneWithoutIdeasInput
+  category: Prisma.CategoryCreateNestedOneWithoutIdeasInput
+  votes?: Prisma.VoteCreateNestedManyWithoutIdeaInput
+  comments?: Prisma.CommentCreateNestedManyWithoutIdeaInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
+  watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+}
+
+export type IdeaUncheckedCreateWithoutInteractionsInput = {
+  id?: string
+  title: string
+  problem: string
+  solution: string
+  description: string
+  images?: Prisma.IdeaCreateimagesInput | string[]
+  isPaid?: boolean
+  price?: number
+  status?: $Enums.Status
+  adminFeedback?: string | null
+  categoryId: string
+  authorId: string
+  createdAt?: Date | string
+  votes?: Prisma.VoteUncheckedCreateNestedManyWithoutIdeaInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIdeaInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
+  watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+}
+
+export type IdeaCreateOrConnectWithoutInteractionsInput = {
+  where: Prisma.IdeaWhereUniqueInput
+  create: Prisma.XOR<Prisma.IdeaCreateWithoutInteractionsInput, Prisma.IdeaUncheckedCreateWithoutInteractionsInput>
+}
+
+export type IdeaUpsertWithoutInteractionsInput = {
+  update: Prisma.XOR<Prisma.IdeaUpdateWithoutInteractionsInput, Prisma.IdeaUncheckedUpdateWithoutInteractionsInput>
+  create: Prisma.XOR<Prisma.IdeaCreateWithoutInteractionsInput, Prisma.IdeaUncheckedCreateWithoutInteractionsInput>
+  where?: Prisma.IdeaWhereInput
+}
+
+export type IdeaUpdateToOneWithWhereWithoutInteractionsInput = {
+  where?: Prisma.IdeaWhereInput
+  data: Prisma.XOR<Prisma.IdeaUpdateWithoutInteractionsInput, Prisma.IdeaUncheckedUpdateWithoutInteractionsInput>
+}
+
+export type IdeaUpdateWithoutInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  problem?: Prisma.StringFieldUpdateOperationsInput | string
+  solution?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  images?: Prisma.IdeaUpdateimagesInput | string[]
+  isPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  price?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  adminFeedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  author?: Prisma.UserUpdateOneRequiredWithoutIdeasNestedInput
+  category?: Prisma.CategoryUpdateOneRequiredWithoutIdeasNestedInput
+  votes?: Prisma.VoteUpdateManyWithoutIdeaNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutIdeaNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
+  watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+}
+
+export type IdeaUncheckedUpdateWithoutInteractionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  problem?: Prisma.StringFieldUpdateOperationsInput | string
+  solution?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  images?: Prisma.IdeaUpdateimagesInput | string[]
+  isPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  price?: Prisma.FloatFieldUpdateOperationsInput | number
+  status?: Prisma.EnumStatusFieldUpdateOperationsInput | $Enums.Status
+  adminFeedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  categoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  authorId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  votes?: Prisma.VoteUncheckedUpdateManyWithoutIdeaNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutIdeaNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
@@ -959,6 +1086,7 @@ export type IdeaCreateWithoutPaymentsInput = {
   comments?: Prisma.CommentCreateNestedManyWithoutIdeaInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutPaymentsInput = {
@@ -979,6 +1107,7 @@ export type IdeaUncheckedCreateWithoutPaymentsInput = {
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIdeaInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutPaymentsInput = {
@@ -1015,6 +1144,7 @@ export type IdeaUpdateWithoutPaymentsInput = {
   comments?: Prisma.CommentUpdateManyWithoutIdeaNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutPaymentsInput = {
@@ -1035,6 +1165,7 @@ export type IdeaUncheckedUpdateWithoutPaymentsInput = {
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIdeaNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaCreateWithoutReviewsInput = {
@@ -1055,6 +1186,7 @@ export type IdeaCreateWithoutReviewsInput = {
   comments?: Prisma.CommentCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutReviewsInput = {
@@ -1075,6 +1207,7 @@ export type IdeaUncheckedCreateWithoutReviewsInput = {
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutReviewsInput = {
@@ -1111,6 +1244,7 @@ export type IdeaUpdateWithoutReviewsInput = {
   comments?: Prisma.CommentUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutReviewsInput = {
@@ -1131,6 +1265,7 @@ export type IdeaUncheckedUpdateWithoutReviewsInput = {
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaCreateWithoutAuthorInput = {
@@ -1151,6 +1286,7 @@ export type IdeaCreateWithoutAuthorInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutAuthorInput = {
@@ -1171,6 +1307,7 @@ export type IdeaUncheckedCreateWithoutAuthorInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutAuthorInput = {
@@ -1217,6 +1354,7 @@ export type IdeaCreateWithoutVotesInput = {
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutVotesInput = {
@@ -1237,6 +1375,7 @@ export type IdeaUncheckedCreateWithoutVotesInput = {
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   watchlist?: Prisma.WatchlistUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutVotesInput = {
@@ -1273,6 +1412,7 @@ export type IdeaUpdateWithoutVotesInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutVotesInput = {
@@ -1293,6 +1433,7 @@ export type IdeaUncheckedUpdateWithoutVotesInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaCreateWithoutWatchlistInput = {
@@ -1313,6 +1454,7 @@ export type IdeaCreateWithoutWatchlistInput = {
   comments?: Prisma.CommentCreateNestedManyWithoutIdeaInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaUncheckedCreateWithoutWatchlistInput = {
@@ -1333,6 +1475,7 @@ export type IdeaUncheckedCreateWithoutWatchlistInput = {
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutIdeaInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutIdeaInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutIdeaInput
+  interactions?: Prisma.IdeaInteractionUncheckedCreateNestedManyWithoutIdeaInput
 }
 
 export type IdeaCreateOrConnectWithoutWatchlistInput = {
@@ -1369,6 +1512,7 @@ export type IdeaUpdateWithoutWatchlistInput = {
   comments?: Prisma.CommentUpdateManyWithoutIdeaNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutWatchlistInput = {
@@ -1389,6 +1533,7 @@ export type IdeaUncheckedUpdateWithoutWatchlistInput = {
   comments?: Prisma.CommentUncheckedUpdateManyWithoutIdeaNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaCreateManyCategoryInput = {
@@ -1424,6 +1569,7 @@ export type IdeaUpdateWithoutCategoryInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutCategoryInput = {
@@ -1444,6 +1590,7 @@ export type IdeaUncheckedUpdateWithoutCategoryInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateManyWithoutCategoryInput = {
@@ -1494,6 +1641,7 @@ export type IdeaUpdateWithoutAuthorInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateWithoutAuthorInput = {
@@ -1514,6 +1662,7 @@ export type IdeaUncheckedUpdateWithoutAuthorInput = {
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutIdeaNestedInput
   watchlist?: Prisma.WatchlistUncheckedUpdateManyWithoutIdeaNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutIdeaNestedInput
+  interactions?: Prisma.IdeaInteractionUncheckedUpdateManyWithoutIdeaNestedInput
 }
 
 export type IdeaUncheckedUpdateManyWithoutAuthorInput = {
@@ -1542,6 +1691,7 @@ export type IdeaCountOutputType = {
   reviews: number
   watchlist: number
   payments: number
+  interactions: number
 }
 
 export type IdeaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1550,6 +1700,7 @@ export type IdeaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   reviews?: boolean | IdeaCountOutputTypeCountReviewsArgs
   watchlist?: boolean | IdeaCountOutputTypeCountWatchlistArgs
   payments?: boolean | IdeaCountOutputTypeCountPaymentsArgs
+  interactions?: boolean | IdeaCountOutputTypeCountInteractionsArgs
 }
 
 /**
@@ -1597,6 +1748,13 @@ export type IdeaCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.PaymentWhereInput
 }
 
+/**
+ * IdeaCountOutputType without action
+ */
+export type IdeaCountOutputTypeCountInteractionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.IdeaInteractionWhereInput
+}
+
 
 export type IdeaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1619,6 +1777,7 @@ export type IdeaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   reviews?: boolean | Prisma.Idea$reviewsArgs<ExtArgs>
   watchlist?: boolean | Prisma.Idea$watchlistArgs<ExtArgs>
   payments?: boolean | Prisma.Idea$paymentsArgs<ExtArgs>
+  interactions?: boolean | Prisma.Idea$interactionsArgs<ExtArgs>
   _count?: boolean | Prisma.IdeaCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["idea"]>
 
@@ -1683,6 +1842,7 @@ export type IdeaInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   reviews?: boolean | Prisma.Idea$reviewsArgs<ExtArgs>
   watchlist?: boolean | Prisma.Idea$watchlistArgs<ExtArgs>
   payments?: boolean | Prisma.Idea$paymentsArgs<ExtArgs>
+  interactions?: boolean | Prisma.Idea$interactionsArgs<ExtArgs>
   _count?: boolean | Prisma.IdeaCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IdeaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1704,6 +1864,7 @@ export type $IdeaPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
     watchlist: Prisma.$WatchlistPayload<ExtArgs>[]
     payments: Prisma.$PaymentPayload<ExtArgs>[]
+    interactions: Prisma.$IdeaInteractionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2120,6 +2281,7 @@ export interface Prisma__IdeaClient<T, Null = never, ExtArgs extends runtime.Typ
   reviews<T extends Prisma.Idea$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Idea$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   watchlist<T extends Prisma.Idea$watchlistArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Idea$watchlistArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WatchlistPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.Idea$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Idea$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  interactions<T extends Prisma.Idea$interactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Idea$interactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IdeaInteractionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2680,6 +2842,30 @@ export type Idea$paymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
+}
+
+/**
+ * Idea.interactions
+ */
+export type Idea$interactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the IdeaInteraction
+   */
+  select?: Prisma.IdeaInteractionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the IdeaInteraction
+   */
+  omit?: Prisma.IdeaInteractionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.IdeaInteractionInclude<ExtArgs> | null
+  where?: Prisma.IdeaInteractionWhereInput
+  orderBy?: Prisma.IdeaInteractionOrderByWithRelationInput | Prisma.IdeaInteractionOrderByWithRelationInput[]
+  cursor?: Prisma.IdeaInteractionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.IdeaInteractionScalarFieldEnum | Prisma.IdeaInteractionScalarFieldEnum[]
 }
 
 /**
