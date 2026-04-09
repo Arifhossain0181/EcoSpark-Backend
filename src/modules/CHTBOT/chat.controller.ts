@@ -18,10 +18,16 @@ export const chatHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // Fallback for custom frontend auth flows where userId is provided in body.
+    if (!currentUserId && typeof req.body?.userId === 'string' && req.body.userId.trim()) {
+      currentUserId = req.body.userId.trim();
+    }
+
   const { message, history = [], projectContext } = req.body as {
     message?: string;
     history?: Array<{ role: string; content: string }>;
     projectContext?: string;
+    userId?: string;
   };
 
   if (!message || typeof message !== 'string') {

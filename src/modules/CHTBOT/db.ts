@@ -2,6 +2,7 @@ import { prisma } from '../../config/Prisma';
 
 export type ProjectSnapshot = {
   counts: {
+    users: number;
     categories: number;
     ideas: number;
     freeIdeas: number;
@@ -32,9 +33,21 @@ export type ProjectSnapshot = {
   paidIdeaSamples: Array<{ title: string; category: string; price: number }>;
   user: {
     id: string | null;
+    totalPayments: number;
+    successfulPayments: number;
+    pendingPayments: number;
+    failedPayments: number;
     paidPurchases: number;
     totalSpent: number;
     purchasedPaidIdeas: number;
+    createdIdeasCount: number;
+    createdPaidIdeasCount: number;
+    commentsCount: number;
+    reviewsCount: number;
+    votesCount: number;
+    watchlistCount: number;
+    latestCreatedIdeas: Array<{ title: string; status: string; isPaid: boolean }>;
+    latestPayments: Array<{ amount: number; status: string; createdAt: Date; ideaTitle: string }>;
     latestPurchasedIdeas: string[];
     preferredCategories: string[];
   };
@@ -44,6 +57,7 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
   const keyword = message.trim();
 
   const [
+    userCount,
     categoryCount,
     ideaCount,
     freeIdeaCount,
@@ -60,9 +74,16 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
     latestIdeas,
     freeIdeaSamples,
     paidIdeaSamples,
+    userCreatedIdeas,
+    userPaymentHistory,
     userPayments,
+    userCommentsCount,
+    userReviewsCount,
+    userVotesCount,
+    userWatchlistCount,
     userWatchlist,
   ] = await Promise.all([
+    prisma.user.count(),
     prisma.category.count(),
     prisma.idea.count(),
     prisma.idea.count({ where: { isPaid: false } }),
@@ -194,6 +215,37 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
       take: 6,
     }),
     userId
+      ? prisma.idea.findMany({
+          where: { authorId: userId },
+          select: {
+            title: true,
+            status: true,
+            isPaid: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+        })
+      : Promise.resolve([]),
+    userId
+      ? prisma.payment.findMany({
+          where: { userId },
+          select: {
+            amount: true,
+            status: true,
+            createdAt: true,
+            idea: {
+              select: {
+                title: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 10,
+        })
+      : Promise.resolve([]),
+    userId
       ? prisma.payment.findMany({
           where: {
             userId,
@@ -203,6 +255,7 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
             amount: true,
             idea: {
               select: {
+                id: true,
                 title: true,
                 isPaid: true,
                 category: {
@@ -216,9 +269,12 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
           orderBy: {
             createdAt: 'desc',
           },
-          take: 8,
         })
       : Promise.resolve([]),
+    userId ? prisma.comment.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.review.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.vote.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.watchlist.count({ where: { userId } }) : Promise.resolve(0),
     userId
       ? prisma.watchlist.findMany({
           where: { userId },
@@ -239,6 +295,12 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
   ]);
 
   const purchasedPaidIdeas = userPayments.filter((payment) => payment.idea.isPaid).length;
+  const totalPayments = userPaymentHistory.length;
+  const successfulPayments = userPaymentHistory.filter((payment) => payment.status === 'SUCCESS').length;
+  const pendingPayments = userPaymentHistory.filter((payment) => payment.status === 'PENDING').length;
+  const failedPayments = userPaymentHistory.filter((payment) => payment.status === 'FAILED').length;
+  const createdIdeasCount = userCreatedIdeas.length;
+  const createdPaidIdeasCount = userCreatedIdeas.filter((idea) => idea.isPaid).length;
   const totalSpent = userPayments.reduce((sum, payment) => sum + payment.amount, 0);
   const preferredCategorySet = new Set<string>([
     ...userPayments.map((payment) => payment.idea.category.name),
@@ -248,6 +310,7 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
 
   return {
     counts: {
+      users: userCount,
       categories: categoryCount,
       ideas: ideaCount,
       freeIdeas: freeIdeaCount,
@@ -297,9 +360,26 @@ export async function getProjectSnapshot(message: string, userId?: string): Prom
     })),
     user: {
       id: userId || null,
+      totalPayments,
+      successfulPayments,
+      pendingPayments,
+      failedPayments,
       paidPurchases: userPayments.length,
       totalSpent,
       purchasedPaidIdeas,
+      createdIdeasCount,
+      createdPaidIdeasCount,
+      commentsCount: userCommentsCount,
+      reviewsCount: userReviewsCount,
+      votesCount: userVotesCount,
+      watchlistCount: userWatchlistCount,
+      latestCreatedIdeas: userCreatedIdeas,
+      latestPayments: userPaymentHistory.map((payment) => ({
+        amount: payment.amount,
+        status: payment.status,
+        createdAt: payment.createdAt,
+        ideaTitle: payment.idea.title,
+      })),
       latestPurchasedIdeas: userPayments.map((payment) => payment.idea.title),
       preferredCategories,
     },
@@ -313,7 +393,7 @@ export async function getContextFromDB(message: string, userId?: string): Promis
 
   lines.push('EcoSpark database snapshot (user profile data excluded):');
   lines.push(
-    `Counts -> categories: ${snapshot.counts.categories}, ideas/projects: ${snapshot.counts.ideas}, free ideas: ${snapshot.counts.freeIdeas}, paid ideas: ${snapshot.counts.paidIdeas}, approved ideas: ${snapshot.counts.approvedIdeas}, comments: ${snapshot.counts.comments}, reviews: ${snapshot.counts.reviews}, votes: ${snapshot.counts.votes}, payments: ${snapshot.counts.payments}, watchlist: ${snapshot.counts.watchlist}.`
+    `Counts -> users: ${snapshot.counts.users}, categories: ${snapshot.counts.categories}, ideas/projects: ${snapshot.counts.ideas}, free ideas: ${snapshot.counts.freeIdeas}, paid ideas: ${snapshot.counts.paidIdeas}, approved ideas: ${snapshot.counts.approvedIdeas}, comments: ${snapshot.counts.comments}, reviews: ${snapshot.counts.reviews}, votes: ${snapshot.counts.votes}, payments: ${snapshot.counts.payments}, watchlist: ${snapshot.counts.watchlist}.`
   );
 
   if (snapshot.categories.length > 0) {
@@ -359,7 +439,7 @@ export async function getContextFromDB(message: string, userId?: string): Promis
 
   if (snapshot.user.id) {
     lines.push(
-      `Current user purchases -> successful payments: ${snapshot.user.paidPurchases}, purchased paid ideas: ${snapshot.user.purchasedPaidIdeas}, total spent: ${snapshot.user.totalSpent}.`
+      `Current user activity -> successful payments: ${snapshot.user.paidPurchases}, purchased paid ideas: ${snapshot.user.purchasedPaidIdeas}, comments: ${snapshot.user.commentsCount}, reviews: ${snapshot.user.reviewsCount}, votes: ${snapshot.user.votesCount}, watchlist: ${snapshot.user.watchlistCount}, total spent: ${snapshot.user.totalSpent}.`
     );
     if (snapshot.user.latestPurchasedIdeas.length > 0) {
       lines.push(`Current user latest purchased ideas: ${snapshot.user.latestPurchasedIdeas.join(', ')}`);

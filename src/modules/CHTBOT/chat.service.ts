@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { getContextFromDB, getProjectSnapshot, type ProjectSnapshot } from './db.js';
+import { getPlannedDbContext } from './chat.planner.js';
 
 type ChatRole = 'system' | 'user' | 'assistant';
 
@@ -102,6 +103,347 @@ const buildNewsletterRecommendations = (snapshot: ProjectSnapshot): string => {
   ].join('\n');
 };
 
+const buildFullDatabaseSummaryAnswer = (message: string, snapshot: ProjectSnapshot): string | null => {
+  const q = message.toLowerCase();
+  const asksDatabase = q.includes('database') || q.includes('db');
+  const asksAllInfo =
+    q.includes('all') ||
+    q.includes('sob') ||
+    q.includes('সব') ||
+    q.includes('ja ja') ||
+    q.includes('information') ||
+    q.includes('info') ||
+    q.includes('infromation') ||
+    q.includes('details');
+
+  if (!asksDatabase || !asksAllInfo) {
+    return null;
+  }
+
+  const lines: string[] = [];
+  lines.push('EcoSpark full database summary:');
+  lines.push(`- users: ${snapshot.counts.users}`);
+  lines.push(`- categories: ${snapshot.counts.categories}`);
+  lines.push(
+    `- ideas: ${snapshot.counts.ideas} (free: ${snapshot.counts.freeIdeas}, paid: ${snapshot.counts.paidIdeas}, approved: ${snapshot.counts.approvedIdeas})`
+  );
+  lines.push(`- comments: ${snapshot.counts.comments}`);
+  lines.push(`- reviews: ${snapshot.counts.reviews}`);
+  lines.push(`- votes: ${snapshot.counts.votes}`);
+  lines.push(`- payments: ${snapshot.counts.payments}`);
+  lines.push(`- watchlist: ${snapshot.counts.watchlist}`);
+
+  if (snapshot.categories.length > 0) {
+    lines.push(`- category list: ${snapshot.categories.slice(0, 10).map((c) => c.name).join(', ')}`);
+  }
+
+  if (snapshot.latestIdeas.length > 0) {
+    lines.push(
+      `- latest ideas: ${snapshot.latestIdeas
+        .slice(0, 6)
+        .map((idea) => `${idea.title} (${idea.category}, ${idea.status})`)
+        .join(', ')}`
+    );
+  }
+
+  if (snapshot.freeIdeaSamples.length > 0) {
+    lines.push(
+      `- free idea samples: ${snapshot.freeIdeaSamples
+        .slice(0, 5)
+        .map((idea) => `${idea.title} (${idea.category})`)
+        .join(', ')}`
+    );
+  }
+
+  if (snapshot.paidIdeaSamples.length > 0) {
+    lines.push(
+      `- paid idea samples: ${snapshot.paidIdeaSamples
+        .slice(0, 5)
+        .map((idea) => `${idea.title} (${idea.category}, price: ${idea.price})`)
+        .join(', ')}`
+    );
+  }
+
+  if (snapshot.user.id) {
+    lines.push(
+      `- your activity: payments ${snapshot.user.paidPurchases}, comments ${snapshot.user.commentsCount}, reviews ${snapshot.user.reviewsCount}, votes ${snapshot.user.votesCount}, watchlist ${snapshot.user.watchlistCount}, total spent ${snapshot.user.totalSpent}`
+    );
+  }
+
+  lines.push('আরও নির্দিষ্ট কিছু চাইলে (যেমন শুধু reviews বা শুধু users) আলাদা করে জিজ্ঞেস করুন।');
+  return lines.join('\n');
+};
+
+const buildPaidFreeIdeasAnswer = (message: string, snapshot: ProjectSnapshot): string | null => {
+  const q = message.toLowerCase();
+
+  const asksFreeIdeas =
+    q.includes('free ideas') || q.includes('free idea') || q.includes('free') || q.includes('ফ্রি');
+  const asksPaidIdeas =
+    q.includes('paid ideas') ||
+    q.includes('paid idea') ||
+    q.includes('paid') ||
+    q.includes('পেইড') ||
+    q.includes('payment') ||
+    q.includes('paymnet') ||
+    q.includes('purchase');
+
+  if (!asksFreeIdeas && !asksPaidIdeas) {
+    return null;
+  }
+
+  if (asksFreeIdeas && !asksPaidIdeas) {
+    const sampleText =
+      snapshot.freeIdeaSamples.length > 0
+        ? snapshot.freeIdeaSamples
+            .slice(0, 5)
+            .map((idea) => `${idea.title} (${idea.category})`)
+            .join(', ')
+        : 'এই মুহূর্তে free idea sample পাওয়া যায়নি';
+
+    return [
+      `Database অনুযায়ী free ideas আছে ${snapshot.counts.freeIdeas} টি।`,
+      `Free idea samples: ${sampleText}`,
+    ].join('\n');
+  }
+
+  if (asksPaidIdeas && !asksFreeIdeas) {
+    const sampleText =
+      snapshot.paidIdeaSamples.length > 0
+        ? snapshot.paidIdeaSamples
+            .slice(0, 5)
+            .map((idea) => `${idea.title} (${idea.category}, price: ${idea.price})`)
+            .join(', ')
+        : 'এই মুহূর্তে paid idea sample পাওয়া যায়নি';
+
+    return [
+      `Database অনুযায়ী paid ideas আছে ${snapshot.counts.paidIdeas} টি।`,
+      `Total successful payments: ${snapshot.counts.payments} টি।`,
+      `Paid idea samples: ${sampleText}`,
+    ].join('\n');
+  }
+
+  return [
+    `Free ideas: ${snapshot.counts.freeIdeas} টি`,
+    `Paid ideas: ${snapshot.counts.paidIdeas} টি`,
+    `Total successful payments: ${snapshot.counts.payments} টি`,
+  ].join('\n');
+};
+
+const buildOwnActivityAnswer = (message: string, snapshot: ProjectSnapshot): string | null => {
+  const q = message.toLowerCase();
+  const hasSelfKeyword =
+    q.includes('ami') ||
+    q.includes('amr') ||
+    q.includes('amar') ||
+    q.includes('my ') ||
+    q.includes('i ') ||
+    q.includes('id diye') ||
+    q.includes('my id');
+
+  if (!hasSelfKeyword) {
+    return null;
+  }
+
+  const asksOwnComment = q.includes('comment');
+  const asksOwnReview = q.includes('review') || q.includes('rating') || q.includes('riview');
+  const asksOwnVote = q.includes('vote') || q.includes('voting');
+  const asksOwnWatchlist = q.includes('watchlist') || q.includes('saved') || q.includes('bookmark');
+  const hasIdeaKeyword = q.includes('idea') || q.includes('ideas') || q.includes('project');
+  const hasCreateKeyword =
+    q.includes('create') ||
+    q.includes('created') ||
+    q.includes('crate') ||
+    q.includes('creat') ||
+    q.includes('made') ||
+    q.includes('post') ||
+    q.includes('added') ||
+    q.includes('banai') ||
+    q.includes('banano') ||
+    q.includes('kora') ||
+    q.includes('korsi') ||
+    q.includes('korci') ||
+    q.includes('korchi') ||
+    q.includes('korechi') ||
+    q.includes('disi') ||
+    q.includes('dichi');
+  const asksOwnIdeas =
+    hasIdeaKeyword && (hasCreateKeyword || q.includes('amar idea') || q.includes('my idea'));
+  const asksPaidInfo = q.includes('paid information') || q.includes('paid info') || q.includes('paid ideas');
+  const asksOwnPayment =
+    q.includes('payment') || q.includes('paymnet') || q.includes('paid') || q.includes('purchase');
+
+  if (
+    !asksOwnComment &&
+    !asksOwnReview &&
+    !asksOwnVote &&
+    !asksOwnWatchlist &&
+    !asksOwnIdeas &&
+    !asksOwnPayment &&
+    !asksPaidInfo
+  ) {
+    return null;
+  }
+
+  if (!snapshot.user.id) {
+    return [
+      'আপনার personal activity check করার জন্য login করতে হবে।',
+      'Login করার পর আবার জিজ্ঞেস করুন: "আমি কি comment/review/vote/payment করেছি?"',
+    ].join('\n');
+  }
+
+  const lines: string[] = ['আপনার personal summary:'];
+
+  if (asksOwnIdeas) {
+    lines.push(
+      `- Created ideas: ${snapshot.user.createdIdeasCount} (paid created: ${snapshot.user.createdPaidIdeasCount})`
+    );
+    if (snapshot.user.latestCreatedIdeas.length > 0) {
+      lines.push(
+        `- Latest created ideas: ${snapshot.user.latestCreatedIdeas
+          .slice(0, 5)
+          .map((idea) => `${idea.title} (${idea.isPaid ? 'Paid' : 'Free'}, ${idea.status})`)
+          .join(', ')}`
+      );
+    }
+
+    // When users ask about own created ideas, include a compact full activity view.
+    if (!asksOwnComment && !asksOwnReview && !asksOwnVote && !asksOwnWatchlist && !asksOwnPayment) {
+      lines.push(
+        `- Activity totals: comments ${snapshot.user.commentsCount}, reviews ${snapshot.user.reviewsCount}, votes ${snapshot.user.votesCount}, watchlist ${snapshot.user.watchlistCount}`
+      );
+      lines.push(
+        `- Payment totals: total ${snapshot.user.totalPayments}, success ${snapshot.user.successfulPayments}, pending ${snapshot.user.pendingPayments}, failed ${snapshot.user.failedPayments}, spent ${snapshot.user.totalSpent}`
+      );
+    }
+  }
+
+  if (asksOwnComment) {
+    lines.push(`- Comments: ${snapshot.user.commentsCount}`);
+  }
+
+  if (asksOwnReview) {
+    lines.push(`- Reviews: ${snapshot.user.reviewsCount}`);
+  }
+
+  if (asksOwnVote) {
+    lines.push(`- Votes: ${snapshot.user.votesCount}`);
+  }
+
+  if (asksOwnWatchlist) {
+    lines.push(`- Watchlist items: ${snapshot.user.watchlistCount}`);
+  }
+
+  if (asksOwnPayment || asksPaidInfo) {
+    lines.push(
+      `- Payment history: total ${snapshot.user.totalPayments}, success ${snapshot.user.successfulPayments}, pending ${snapshot.user.pendingPayments}, failed ${snapshot.user.failedPayments}`
+    );
+    lines.push(
+      `- Paid purchases: ${snapshot.user.purchasedPaidIdeas}, total spent: ${snapshot.user.totalSpent}`
+    );
+
+    if (snapshot.user.latestPayments.length > 0) {
+      lines.push(
+        `- Recent payments: ${snapshot.user.latestPayments
+          .slice(0, 5)
+          .map((payment) => `${payment.ideaTitle} (${payment.amount}, ${payment.status})`)
+          .join(', ')}`
+      );
+    }
+  }
+
+  if (asksPaidInfo) {
+    lines.push(
+      `- Platform paid info: paid ideas ${snapshot.counts.paidIdeas}, free ideas ${snapshot.counts.freeIdeas}, total successful payments ${snapshot.counts.payments}`
+    );
+  }
+
+  if (lines.length === 1) {
+    return null;
+  }
+
+  return lines.join('\n');
+};
+
+const buildCoreModuleInstantAnswer = (message: string, snapshot: ProjectSnapshot): string | null => {
+  const q = message.toLowerCase();
+  const hasSelfKeyword =
+    q.includes('ami') ||
+    q.includes('amr') ||
+    q.includes('amar') ||
+    q.includes('my ') ||
+    q.includes('i ') ||
+    q.includes('id diye') ||
+    q.includes('my id');
+
+  const asksAllModules =
+    q.includes('sob') ||
+    q.includes('সব') ||
+    q.includes('all') ||
+    q.includes('ja ja ase') ||
+    q.includes('module') ||
+    q.includes('database');
+
+  const wantsUsers = q.includes('user') || q.includes('koi jon') || q.includes('koy jon') || q.includes('koto jon');
+  const wantsCategories = q.includes('category') || q.includes('categories') || q.includes('catagory') || q.includes('catagori');
+  const wantsIdeas = q.includes('idea') || q.includes('ideas') || q.includes('koita') || q.includes('koyta');
+  const wantsComments = q.includes('comment');
+  const wantsReviews = q.includes('review') || q.includes('rating') || q.includes('riview');
+  const wantsVotes = q.includes('vote') || q.includes('voting');
+  const wantsPayments =
+    q.includes('payment') || q.includes('paymnet') || q.includes('paid') || q.includes('purchase');
+  const wantsWatchlist = q.includes('watchlist');
+
+  const hasSpecificModule =
+    wantsUsers ||
+    wantsCategories ||
+    wantsIdeas ||
+    wantsComments ||
+    wantsReviews ||
+    wantsVotes ||
+    wantsPayments ||
+    wantsWatchlist;
+
+  // Personal queries should be handled by the personal activity handler, not global summary.
+  if (hasSelfKeyword) {
+    return null;
+  }
+
+  if (!asksAllModules && !hasSpecificModule) {
+    return null;
+  }
+
+  const lines: string[] = ['EcoSpark live database summary:'];
+
+  if (asksAllModules || wantsUsers) lines.push(`- users: ${snapshot.counts.users}`);
+  if (asksAllModules || wantsCategories) lines.push(`- categories: ${snapshot.counts.categories}`);
+  if (asksAllModules || wantsIdeas) {
+    lines.push(
+      `- ideas: ${snapshot.counts.ideas} (free: ${snapshot.counts.freeIdeas}, paid: ${snapshot.counts.paidIdeas}, approved: ${snapshot.counts.approvedIdeas})`
+    );
+  }
+  if (asksAllModules || wantsComments) lines.push(`- comments: ${snapshot.counts.comments}`);
+  if (asksAllModules || wantsReviews) lines.push(`- reviews: ${snapshot.counts.reviews}`);
+  if (asksAllModules || wantsVotes) lines.push(`- votes: ${snapshot.counts.votes}`);
+  if (asksAllModules || wantsPayments) lines.push(`- payments: ${snapshot.counts.payments}`);
+  if (asksAllModules || wantsWatchlist) lines.push(`- watchlist: ${snapshot.counts.watchlist}`);
+
+  if ((asksAllModules || wantsCategories) && snapshot.categories.length > 0) {
+    lines.push(`- top categories: ${snapshot.categories.slice(0, 8).map((c) => c.name).join(', ')}`);
+  }
+
+  if ((asksAllModules || wantsIdeas) && snapshot.latestIdeas.length > 0) {
+    lines.push(
+      `- latest ideas: ${snapshot.latestIdeas
+        .slice(0, 5)
+        .map((idea) => `${idea.title} (${idea.category})`)
+        .join(', ')}`
+    );
+  }
+
+  return lines.join('\n');
+};
+
 const buildDynamicFallbackAnswer = (message: string, snapshot: ProjectSnapshot): string => {
   const q = message.toLowerCase();
   const categoriesText = snapshot.categories.map((category) => category.name).join(', ') || 'No categories yet';
@@ -109,6 +451,26 @@ const buildDynamicFallbackAnswer = (message: string, snapshot: ProjectSnapshot):
     snapshot.latestIdeas.length > 0
       ? snapshot.latestIdeas.map((idea) => `${idea.title} (${idea.category})`).join(', ')
       : 'No ideas yet';
+
+  const fullDatabaseSummary = buildFullDatabaseSummaryAnswer(message, snapshot);
+  if (fullDatabaseSummary) {
+    return fullDatabaseSummary;
+  }
+
+  const ownActivityAnswer = buildOwnActivityAnswer(message, snapshot);
+  if (ownActivityAnswer) {
+    return ownActivityAnswer;
+  }
+
+  const paidFreeAnswer = buildPaidFreeIdeasAnswer(message, snapshot);
+  if (paidFreeAnswer) {
+    return paidFreeAnswer;
+  }
+
+  const coreModuleAnswer = buildCoreModuleInstantAnswer(message, snapshot);
+  if (coreModuleAnswer) {
+    return coreModuleAnswer;
+  }
 
   const asksLoginHelp =
     q.includes('login') ||
@@ -127,42 +489,6 @@ const buildDynamicFallbackAnswer = (message: string, snapshot: ProjectSnapshot):
       '3) Browser cookies/local storage clear করে আবার login',
       '4) Backend server running আছে কি না',
       '5) সমস্যা থাকলে password reset বা নতুন account দিয়ে verify করুন',
-    ].join('\n');
-  }
-
-  const asksFreeIdeas =
-    q.includes('free') || q.includes('ফ্রি') || q.includes('free idea') || q.includes('free ideas');
-
-  if (asksFreeIdeas) {
-    const sampleText =
-      snapshot.freeIdeaSamples.length > 0
-        ? snapshot.freeIdeaSamples
-            .slice(0, 5)
-            .map((idea) => `${idea.title} (${idea.category})`)
-            .join(', ')
-        : 'এই মুহূর্তে free idea sample পাওয়া যায়নি';
-
-    return [
-      `Database অনুযায়ী free ideas আছে ${snapshot.counts.freeIdeas} টি।`,
-      `Free idea samples: ${sampleText}`,
-    ].join('\n');
-  }
-
-  const asksPaidIdeas =
-    q.includes('paid') || q.includes('পেইড') || q.includes('payment') || q.includes('purchase');
-
-  if (asksPaidIdeas) {
-    const sampleText =
-      snapshot.paidIdeaSamples.length > 0
-        ? snapshot.paidIdeaSamples
-            .slice(0, 5)
-            .map((idea) => `${idea.title} (${idea.category}, price: ${idea.price})`)
-            .join(', ')
-        : 'এই মুহূর্তে paid idea sample পাওয়া যায়নি';
-
-    return [
-      `Database অনুযায়ী paid ideas আছে ${snapshot.counts.paidIdeas} টি এবং total successful payments ${snapshot.counts.payments} টি।`,
-      `Paid idea samples: ${sampleText}`,
     ].join('\n');
   }
 
@@ -269,6 +595,40 @@ export const getChatResponse = async (
     console.error('Failed to load project snapshot:', error);
   }
 
+  if (snapshot) {
+    const fullDatabaseSummary = buildFullDatabaseSummaryAnswer(message, snapshot);
+    if (fullDatabaseSummary) {
+      writeSseData(res, fullDatabaseSummary);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+
+    const ownActivityAnswer = buildOwnActivityAnswer(message, snapshot);
+    if (ownActivityAnswer) {
+      writeSseData(res, ownActivityAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+
+    const paidFreeAnswer = buildPaidFreeIdeasAnswer(message, snapshot);
+    if (paidFreeAnswer) {
+      writeSseData(res, paidFreeAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+
+    const coreModuleAnswer = buildCoreModuleInstantAnswer(message, snapshot);
+    if (coreModuleAnswer) {
+      writeSseData(res, coreModuleAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+  }
+
   if (!apiKey) {
     const fallback = snapshot
       ? buildDynamicFallbackAnswer(message, snapshot)
@@ -281,7 +641,10 @@ export const getChatResponse = async (
 
   let dbContext = '';
   try {
-    dbContext = await getContextFromDB(message, currentUserId);
+    dbContext = await getPlannedDbContext(message, sanitizeHistory(history), currentUserId);
+    if (!dbContext) {
+      dbContext = await getContextFromDB(message, currentUserId);
+    }
   } catch (error) {
     console.error('Failed to build DB context:', error);
   }
@@ -289,6 +652,9 @@ export const getChatResponse = async (
   const systemPrompt = `You are EcoSpark assistant.
 Answer in the same language the user uses (Bangla or English).
 Keep responses short, clear, and practical.
+Prefer bullet points for list-style answers.
+Highlight key numbers in a noticeable style (for example: **12 টি paid idea**).
+For personal queries, answer only using the current logged-in user's data when available.
 You can answer questions about platform data (ideas/projects, categories, comments, reviews, votes, payments, watchlist).
 You can also provide support guidance (FAQ/common tasks), AI content suggestions (blog/post/newsletter ideas), and smart newsletter recommendations aligned with live platform data and user interests.
 If the user asks about project features/pages/roles/flows, use the project context below.

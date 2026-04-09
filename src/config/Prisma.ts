@@ -4,6 +4,26 @@ import { PrismaClient } from '../generated/prisma/client';
 
 let prismaClient: PrismaClient | null = null;
 
+const normalizePostgresConnectionString = (connectionString: string): string => {
+	try {
+		const url = new URL(connectionString);
+		const sslMode = url.searchParams.get('sslmode');
+		const useLibpqCompat = url.searchParams.get('uselibpqcompat');
+
+		if (
+			useLibpqCompat !== 'true' &&
+			(sslMode === 'prefer' || sslMode === 'require' || sslMode === 'verify-ca')
+		) {
+			url.searchParams.set('sslmode', 'verify-full');
+			return url.toString();
+		}
+	} catch {
+		// Keep original value when URL parsing fails.
+	}
+
+	return connectionString;
+};
+
 const getPrismaClient = () => {
 	if (prismaClient) {
 		return prismaClient;
@@ -14,7 +34,8 @@ const getPrismaClient = () => {
 		throw new Error("DATABASE_URL is not configured");
 	}
 
-	const adapter = new PrismaPg({ connectionString });
+	const normalizedConnectionString = normalizePostgresConnectionString(connectionString);
+	const adapter = new PrismaPg({ connectionString: normalizedConnectionString });
 	prismaClient = new PrismaClient({ adapter });
 	return prismaClient;
 };

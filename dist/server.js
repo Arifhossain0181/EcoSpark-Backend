@@ -23,7 +23,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/app.ts
-var import_express10 = __toESM(require("express"));
+var import_express12 = __toESM(require("express"));
 var import_cors = __toESM(require("cors"));
 var import_dotenv = __toESM(require("dotenv"));
 
@@ -48,6 +48,13 @@ var authMiddleware = async (req, res, next) => {
 var adminOnly = (req, res, next) => {
   if (req.user?.role !== "ADMIN") {
     res.status(403).json({ message: "Forbidden: Admins only" });
+    return;
+  }
+  next();
+};
+var adminOrManager = (req, res, next) => {
+  if (req.user?.role !== "ADMIN" && req.user?.role !== "MANAGER") {
+    res.status(403).json({ message: "Forbidden: Admins or Managers only" });
     return;
   }
   next();
@@ -83,6 +90,9 @@ var errorMiddleware = (err, req, res, next) => {
 // src/middleware/auth/auth.route.ts
 var import_express = require("express");
 
+// src/middleware/auth/auth.controller.ts
+var import_axios = __toESM(require("axios"));
+
 // src/config/Prisma.ts
 var import_adapter_pg = require("@prisma/adapter-pg");
 var import_config = require("dotenv/config");
@@ -94,7 +104,7 @@ var config = {
   "clientVersion": "7.5.0",
   "engineVersion": "280c870be64f457428992c43c1f6d557fab6e29e",
   "activeProvider": "postgresql",
-  "inlineSchema": 'model Category {\n  id    String @id @default(uuid())\n  name  String @unique\n  ideas Idea[]\n}\n\nmodel Comment {\n  id        String    @id @default(uuid())\n  text      String\n  userId    String\n  ideaId    String\n  parentId  String?\n  user      User      @relation(fields: [userId], references: [id])\n  idea      Idea      @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  parent    Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)\n  replies   Comment[] @relation("replies")\n  createdAt DateTime  @default(now())\n}\n\nenum Role {\n  MEMBER\n  ADMIN\n}\n\nenum Status {\n  DRAFT\n  UNDER_REVIEW\n  APPROVED\n  REJECTED\n}\n\nenum VoteType {\n  UP\n  DOWN\n}\n\nenum PaymentStatus {\n  PENDING\n  SUCCESS\n  FAILED\n}\n\nmodel Idea {\n  id            String      @id @default(uuid())\n  title         String\n  problem       String\n  solution      String\n  description   String\n  images        String[]\n  isPaid        Boolean     @default(false)\n  price         Float       @default(0)\n  status        Status      @default(DRAFT)\n  adminFeedback String?\n  categoryId    String\n  authorId      String\n  author        User        @relation(fields: [authorId], references: [id])\n  category      Category    @relation(fields: [categoryId], references: [id])\n  votes         Vote[]\n  comments      Comment[]\n  reviews       Review[]\n  watchlist     Watchlist[]\n  payments      Payment[]\n  createdAt     DateTime    @default(now())\n}\n\nmodel Payment {\n  id        String        @id @default(uuid())\n  userId    String\n  ideaId    String\n  amount    Float\n  status    PaymentStatus @default(PENDING)\n  tranId    String?       @unique\n  user      User          @relation(fields: [userId], references: [id])\n  idea      Idea          @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime      @default(now())\n}\n\nmodel Review {\n  id        String   @id @default(uuid())\n  rating    Int\n  comment   String\n  userId    String\n  ideaId    String\n  user      User     @relation(fields: [userId], references: [id])\n  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nmodel User {\n  id        String      @id @default(uuid())\n  name      String\n  email     String      @unique\n  password  String\n  role      Role        @default(MEMBER)\n  isActive  Boolean     @default(true)\n  avatar    String?\n  ideas     Idea[]\n  votes     Vote[]\n  comments  Comment[]\n  reviews   Review[]\n  watchlist Watchlist[]\n  payments  Payment[]\n  createdAt DateTime    @default(now())\n}\n\nmodel Vote {\n  id     String   @id @default(uuid())\n  type   VoteType\n  userId String\n  ideaId String\n  user   User     @relation(fields: [userId], references: [id])\n  idea   Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n\nmodel Watchlist {\n  id     String @id @default(uuid())\n  userId String\n  ideaId String\n  user   User   @relation(fields: [userId], references: [id])\n  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n',
+  "inlineSchema": 'model Category {\n  id    String @id @default(uuid())\n  name  String @unique\n  ideas Idea[]\n}\n\nmodel Comment {\n  id        String    @id @default(uuid())\n  text      String\n  userId    String\n  ideaId    String\n  parentId  String?\n  user      User      @relation(fields: [userId], references: [id])\n  idea      Idea      @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  parent    Comment?  @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)\n  replies   Comment[] @relation("replies")\n  createdAt DateTime  @default(now())\n}\n\nenum Role {\n  MEMBER\n  MANAGER\n  ADMIN\n}\n\nenum Status {\n  DRAFT\n  UNDER_REVIEW\n  APPROVED\n  REJECTED\n}\n\nenum VoteType {\n  UP\n  DOWN\n}\n\nenum PaymentStatus {\n  PENDING\n  SUCCESS\n  FAILED\n}\n\nmodel Idea {\n  id            String      @id @default(uuid())\n  title         String\n  problem       String\n  solution      String\n  description   String\n  images        String[]\n  isPaid        Boolean     @default(false)\n  price         Float       @default(0)\n  status        Status      @default(DRAFT)\n  adminFeedback String?\n  categoryId    String\n  authorId      String\n  author        User        @relation(fields: [authorId], references: [id])\n  category      Category    @relation(fields: [categoryId], references: [id])\n  votes         Vote[]\n  comments      Comment[]\n  reviews       Review[]\n  watchlist     Watchlist[]\n  payments      Payment[]\n  createdAt     DateTime    @default(now())\n}\n\nmodel Payment {\n  id        String        @id @default(uuid())\n  userId    String\n  ideaId    String\n  amount    Float\n  status    PaymentStatus @default(PENDING)\n  tranId    String?       @unique\n  user      User          @relation(fields: [userId], references: [id])\n  idea      Idea          @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime      @default(now())\n}\n\nmodel Review {\n  id        String   @id @default(uuid())\n  rating    Int\n  comment   String\n  userId    String\n  ideaId    String\n  user      User     @relation(fields: [userId], references: [id])\n  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n  createdAt DateTime @default(now())\n}\n\n// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = "prisma-client"\n  output   = "../src/generated/prisma"\n}\n\ndatasource db {\n  provider = "postgresql"\n}\n\nmodel User {\n  id        String      @id @default(uuid())\n  name      String\n  email     String      @unique\n  password  String\n  role      Role        @default(MEMBER)\n  isActive  Boolean     @default(true)\n  avatar    String?\n  ideas     Idea[]\n  votes     Vote[]\n  comments  Comment[]\n  reviews   Review[]\n  watchlist Watchlist[]\n  payments  Payment[]\n  createdAt DateTime    @default(now())\n}\n\nmodel Vote {\n  id     String   @id @default(uuid())\n  type   VoteType\n  userId String\n  ideaId String\n  user   User     @relation(fields: [userId], references: [id])\n  idea   Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n\nmodel Watchlist {\n  id     String @id @default(uuid())\n  userId String\n  ideaId String\n  user   User   @relation(fields: [userId], references: [id])\n  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, ideaId])\n}\n',
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -165,6 +175,19 @@ var PrismaClient = getPrismaClientClass();
 
 // src/config/Prisma.ts
 var prismaClient = null;
+var normalizePostgresConnectionString = (connectionString) => {
+  try {
+    const url = new URL(connectionString);
+    const sslMode = url.searchParams.get("sslmode");
+    const useLibpqCompat = url.searchParams.get("uselibpqcompat");
+    if (useLibpqCompat !== "true" && (sslMode === "prefer" || sslMode === "require" || sslMode === "verify-ca")) {
+      url.searchParams.set("sslmode", "verify-full");
+      return url.toString();
+    }
+  } catch {
+  }
+  return connectionString;
+};
 var getPrismaClient2 = () => {
   if (prismaClient) {
     return prismaClient;
@@ -173,7 +196,8 @@ var getPrismaClient2 = () => {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not configured");
   }
-  const adapter = new import_adapter_pg.PrismaPg({ connectionString });
+  const normalizedConnectionString = normalizePostgresConnectionString(connectionString);
+  const adapter = new import_adapter_pg.PrismaPg({ connectionString: normalizedConnectionString });
   prismaClient = new PrismaClient({ adapter });
   return prismaClient;
 };
@@ -187,6 +211,7 @@ var prisma = new Proxy({}, {
 // src/middleware/auth/auth.service.ts
 var import_bcryptjs = __toESM(require("bcryptjs"));
 var import_jsonwebtoken2 = __toESM(require("jsonwebtoken"));
+var import_crypto = __toESM(require("crypto"));
 var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 var createHttpError = (message, statusCode) => {
   const err = new Error(message);
@@ -201,6 +226,51 @@ var issueTokens = (payload) => {
     expiresIn: "7d"
   });
   return { accessToken, refreshToken };
+};
+var buildAuthPayload = (user) => {
+  const { accessToken, refreshToken } = issueTokens({
+    userId: user.id,
+    role: user.role
+  });
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  };
+};
+var loginOrRegisterSocialUser = async (input) => {
+  const normalizedEmail = input.email?.trim().toLowerCase() || `${input.provider}_${input.providerId}@social.ecospark.local`;
+  const displayName = input.name?.trim() || `${input.provider} user`;
+  let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (!user) {
+    const randomPassword = import_crypto.default.randomBytes(24).toString("hex");
+    const hashedPassword = await import_bcryptjs.default.hash(randomPassword, 10);
+    user = await prisma.user.create({
+      data: {
+        name: displayName,
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: "MEMBER",
+        isActive: true
+      }
+    });
+  } else if (displayName && user.name !== displayName) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { name: displayName }
+    });
+  }
+  return buildAuthPayload({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role
+  });
 };
 var registerUser = async (name, email, password) => {
   if (!name?.trim()) {
@@ -226,17 +296,12 @@ var registerUser = async (name, email, password) => {
       // Default role, adjust as needed
     }
   });
-  const { accessToken, refreshToken } = issueTokens({ userId: user.id, role: user.role });
-  return {
-    accessToken,
-    refreshToken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
-  };
+  return buildAuthPayload({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role
+  });
 };
 var loginUser = async (email, password) => {
   if (!email?.trim() || !password) {
@@ -250,17 +315,12 @@ var loginUser = async (email, password) => {
   if (!isMatch) {
     throw createHttpError("Invalid credentials", 401);
   }
-  const { accessToken, refreshToken } = issueTokens({ userId: user.id, role: user.role });
-  return {
-    accessToken,
-    refreshToken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
-  };
+  return buildAuthPayload({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role
+  });
 };
 var refreshAccessToken = async (refreshToken) => {
   if (!refreshToken) {
@@ -322,6 +382,38 @@ var getErrorStatus = (error, fallback = 400) => {
 var getErrorMessage = (error) => {
   if (error instanceof Error) return error.message;
   return "Unexpected error";
+};
+var getClientBaseUrl = () => process.env.CLIENT_URL || "http://localhost:3000";
+var getServerBaseUrl = (req) => {
+  if (process.env.SERVER_PUBLIC_URL) return process.env.SERVER_PUBLIC_URL;
+  return `${req.protocol}://${req.get("host")}`;
+};
+var getRedirectUri = (req, provider) => {
+  return `${getServerBaseUrl(req)}/api/auth/${provider}/callback`;
+};
+var setAuthCookies = (res, accessToken, refreshToken) => {
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 15 * 60 * 1e3
+  });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1e3
+  });
+};
+var redirectWithAuthPayload = (res, payload) => {
+  setAuthCookies(res, payload.accessToken, payload.refreshToken);
+  const encodedUser = Buffer.from(JSON.stringify(payload.user)).toString("base64url");
+  const callbackUrl = `${getClientBaseUrl()}/auth/social-callback?accessToken=${encodeURIComponent(payload.accessToken)}&refreshToken=${encodeURIComponent(payload.refreshToken)}&user=${encodeURIComponent(encodedUser)}`;
+  return res.redirect(callbackUrl);
+};
+var redirectWithAuthError = (res, message) => {
+  const callbackUrl = `${getClientBaseUrl()}/auth/social-callback?error=${encodeURIComponent(message)}`;
+  return res.redirect(callbackUrl);
 };
 var register = async (req, res) => {
   try {
@@ -394,6 +486,128 @@ var getMe = async (req, res) => {
     res.status(getErrorStatus(error, 400)).json({ error: getErrorMessage(error) });
   }
 };
+var startGoogleAuth = async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const redirectUri = getRedirectUri(req, "google");
+  if (!clientId) {
+    return res.status(500).json({ error: "Google OAuth is not configured" });
+  }
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
+  return res.redirect(googleAuthUrl);
+};
+var googleCallback = async (req, res) => {
+  try {
+    const code = req.query.code;
+    if (!code) {
+      return redirectWithAuthError(res, "Missing Google authorization code");
+    }
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const redirectUri = getRedirectUri(req, "google");
+    if (!clientId || !clientSecret) {
+      return redirectWithAuthError(res, "Google OAuth is not configured");
+    }
+    const tokenResponse = await import_axios.default.post("https://oauth2.googleapis.com/token", {
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code"
+    });
+    const idToken = tokenResponse.data?.id_token;
+    const accessToken = tokenResponse.data?.access_token;
+    let googleProfile = {};
+    if (idToken) {
+      const profileResponse = await import_axios.default.get("https://oauth2.googleapis.com/tokeninfo", {
+        params: { id_token: idToken }
+      });
+      googleProfile = {
+        id: profileResponse.data?.sub,
+        email: profileResponse.data?.email,
+        name: profileResponse.data?.name
+      };
+    } else if (accessToken) {
+      const profileResponse = await import_axios.default.get("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      googleProfile = {
+        id: profileResponse.data?.id,
+        email: profileResponse.data?.email,
+        name: profileResponse.data?.name
+      };
+    }
+    if (!googleProfile.id && !googleProfile.email) {
+      return redirectWithAuthError(res, "Unable to fetch Google profile");
+    }
+    const payload = await loginOrRegisterSocialUser({
+      provider: "google",
+      providerId: googleProfile.id || googleProfile.email || "unknown",
+      email: googleProfile.email,
+      name: googleProfile.name
+    });
+    return redirectWithAuthPayload(res, payload);
+  } catch (error) {
+    return redirectWithAuthError(res, getErrorMessage(error));
+  }
+};
+var startFacebookAuth = async (req, res) => {
+  const clientId = process.env.FACEBOOK_CLIENT_ID;
+  const redirectUri = getRedirectUri(req, "facebook");
+  if (!clientId) {
+    return res.status(500).json({ error: "Facebook OAuth is not configured" });
+  }
+  const facebookAuthUrl = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=email,public_profile`;
+  return res.redirect(facebookAuthUrl);
+};
+var facebookCallback = async (req, res) => {
+  try {
+    const code = req.query.code;
+    if (!code) {
+      return redirectWithAuthError(res, "Missing Facebook authorization code");
+    }
+    const clientId = process.env.FACEBOOK_CLIENT_ID;
+    const clientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+    const redirectUri = getRedirectUri(req, "facebook");
+    if (!clientId || !clientSecret) {
+      return redirectWithAuthError(res, "Facebook OAuth is not configured");
+    }
+    const tokenResponse = await import_axios.default.get("https://graph.facebook.com/v20.0/oauth/access_token", {
+      params: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        code
+      }
+    });
+    const providerAccessToken = tokenResponse.data?.access_token;
+    if (!providerAccessToken) {
+      return redirectWithAuthError(res, "Unable to fetch Facebook access token");
+    }
+    const profileResponse = await import_axios.default.get("https://graph.facebook.com/me", {
+      params: {
+        fields: "id,name,email",
+        access_token: providerAccessToken
+      }
+    });
+    const profile = {
+      id: profileResponse.data?.id,
+      name: profileResponse.data?.name,
+      email: profileResponse.data?.email
+    };
+    if (!profile.id && !profile.email) {
+      return redirectWithAuthError(res, "Unable to fetch Facebook profile");
+    }
+    const payload = await loginOrRegisterSocialUser({
+      provider: "facebook",
+      providerId: profile.id || profile.email || "unknown",
+      email: profile.email,
+      name: profile.name
+    });
+    return redirectWithAuthPayload(res, payload);
+  } catch (error) {
+    return redirectWithAuthError(res, getErrorMessage(error));
+  }
+};
 
 // src/middleware/auth/auth.route.ts
 var router = (0, import_express.Router)();
@@ -401,6 +615,10 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/refresh", refresh);
 router.get("/me", authMiddleware, getMe);
+router.get("/google", startGoogleAuth);
+router.get("/google/callback", googleCallback);
+router.get("/facebook", startFacebookAuth);
+router.get("/facebook/callback", facebookCallback);
 var auth_route_default = router;
 
 // src/modules/comment/comment.routes.ts
@@ -466,7 +684,7 @@ var deleteComment = async (commentId, userId, role) => {
   if (!commentfind) {
     throw new Error("Comment not found");
   }
-  if (commentfind.userId !== userId && role !== "ADMIN") {
+  if (commentfind.userId !== userId && role !== "ADMIN" && role !== "MANAGER") {
     throw new Error("Unauthorized");
   }
   await prisma.comment.delete({
@@ -564,7 +782,7 @@ var getAllCommentsAdmin = async (req, res) => {
 
 // src/modules/comment/comment.routes.ts
 var router2 = (0, import_express2.Router)();
-router2.get("/admin/all", authMiddleware, adminOnly, getAllCommentsAdmin);
+router2.get("/admin/all", authMiddleware, adminOrManager, getAllCommentsAdmin);
 router2.get("/:ideaId", getComments);
 router2.post("/:ideaId", authMiddleware, addComment2);
 router2.delete("/:id", authMiddleware, deleteComment2);
@@ -783,7 +1001,7 @@ var uPdateIdea = async (id, data, userId) => {
 var deleteIdea = async (id, userId, role) => {
   const idea = await prisma.idea.findUniqueOrThrow({ where: { id } });
   if (!idea) throw new Error("Idea not found");
-  if (idea.authorId !== userId && role !== "ADMIN") {
+  if (idea.authorId !== userId && role !== "ADMIN" && role !== "MANAGER") {
     throw createHttpError2("Unauthorized", 403);
   }
   if (idea.isPaid) {
@@ -1229,10 +1447,10 @@ var updateCategoryController = async (req, res) => {
 
 // src/modules/category/category.route.ts
 var router6 = (0, import_express6.Router)();
-router6.post("/", authMiddleware, adminOnly, createCategoryController);
+router6.post("/", authMiddleware, adminOrManager, createCategoryController);
 router6.get("/", getAllCategoriesController);
-router6.delete("/:id", authMiddleware, adminOnly, deleteCategoryController);
-router6.patch("/:id", authMiddleware, adminOnly, updateCategoryController);
+router6.delete("/:id", authMiddleware, adminOrManager, deleteCategoryController);
+router6.patch("/:id", authMiddleware, adminOrManager, updateCategoryController);
 var category_route_default = router6;
 
 // src/modules/admin/admin.route.ts
@@ -1463,10 +1681,10 @@ var dashboardStatsController = async (req, res) => {
 
 // src/modules/admin/admin.route.ts
 var router7 = import_express7.default.Router();
-router7.get("/dashboard", authMiddleware, adminOnly, dashboardStatsController);
-router7.get("/ideas", authMiddleware, adminOnly, getAllIdeasController);
-router7.patch("/ideas/:id/approve", authMiddleware, adminOnly, approveIdeaController);
-router7.patch("/ideas/:id/reject", authMiddleware, adminOnly, rejectIdeaController);
+router7.get("/dashboard", authMiddleware, adminOrManager, dashboardStatsController);
+router7.get("/ideas", authMiddleware, adminOrManager, getAllIdeasController);
+router7.patch("/ideas/:id/approve", authMiddleware, adminOrManager, approveIdeaController);
+router7.patch("/ideas/:id/reject", authMiddleware, adminOrManager, rejectIdeaController);
 router7.get("/users", authMiddleware, adminOnly, getAllUsersController);
 router7.patch("/users/:id", authMiddleware, adminOnly, updateUserController);
 router7.delete("/users/:id", authMiddleware, adminOnly, deleteUserController);
@@ -1883,18 +2101,1284 @@ router9.get("/my-ideas", authMiddleware, getMyPurchasedIdeas2);
 router9.get("/admin", authMiddleware, adminOnly, getAllPaymentsForAdmin2);
 var Payment_route_default = router9;
 
+// src/modules/stats/stats.route.ts
+var import_express10 = __toESM(require("express"));
+
+// src/modules/stats/stats.controller.ts
+var getStats = async (req, res) => {
+  try {
+    const [ideasShared, members, approved] = await Promise.all([
+      prisma.idea.count(),
+      prisma.user.count(),
+      prisma.idea.count({ where: { status: "APPROVED" } })
+    ]);
+    res.json({
+      ideasShared,
+      members,
+      approved
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+};
+
+// src/modules/stats/stats.route.ts
+var router10 = import_express10.default.Router();
+router10.get("/", getStats);
+var stats_route_default = router10;
+
+// src/modules/CHTBOT/chat.router.ts
+var import_express11 = __toESM(require("express"));
+
+// src/modules/CHTBOT/db.ts
+async function getProjectSnapshot(message, userId) {
+  const keyword = message.trim();
+  const [
+    userCount,
+    categoryCount,
+    ideaCount,
+    freeIdeaCount,
+    paidIdeaCount,
+    approvedIdeaCount,
+    commentCount,
+    reviewCount,
+    voteCount,
+    paymentCount,
+    watchlistCount,
+    categories,
+    matchedCategories,
+    matchedIdeas,
+    latestIdeas,
+    freeIdeaSamples,
+    paidIdeaSamples,
+    userCreatedIdeas,
+    userPaymentHistory,
+    userPayments,
+    userCommentsCount,
+    userReviewsCount,
+    userVotesCount,
+    userWatchlistCount,
+    userWatchlist
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.category.count(),
+    prisma.idea.count(),
+    prisma.idea.count({ where: { isPaid: false } }),
+    prisma.idea.count({ where: { isPaid: true } }),
+    prisma.idea.count({ where: { status: "APPROVED" } }),
+    prisma.comment.count(),
+    prisma.review.count(),
+    prisma.vote.count(),
+    prisma.payment.count(),
+    prisma.watchlist.count(),
+    prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            ideas: true
+          }
+        }
+      },
+      take: 12,
+      orderBy: {
+        name: "asc"
+      }
+    }),
+    prisma.category.findMany({
+      where: {
+        name: {
+          contains: keyword,
+          mode: "insensitive"
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            ideas: true
+          }
+        }
+      },
+      take: 5
+    }),
+    prisma.idea.findMany({
+      where: {
+        OR: [
+          { title: { contains: keyword, mode: "insensitive" } },
+          { problem: { contains: keyword, mode: "insensitive" } },
+          { solution: { contains: keyword, mode: "insensitive" } },
+          { description: { contains: keyword, mode: "insensitive" } },
+          { category: { name: { contains: keyword, mode: "insensitive" } } }
+        ]
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        isPaid: true,
+        price: true,
+        category: {
+          select: {
+            name: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            votes: true,
+            reviews: true,
+            payments: true
+          }
+        }
+      },
+      take: 8,
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.idea.findMany({
+      select: {
+        title: true,
+        status: true,
+        category: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 6
+    }),
+    prisma.idea.findMany({
+      where: {
+        isPaid: false,
+        status: "APPROVED"
+      },
+      select: {
+        title: true,
+        category: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 6
+    }),
+    prisma.idea.findMany({
+      where: {
+        isPaid: true,
+        status: "APPROVED"
+      },
+      select: {
+        title: true,
+        price: true,
+        category: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 6
+    }),
+    userId ? prisma.idea.findMany({
+      where: { authorId: userId },
+      select: {
+        title: true,
+        status: true,
+        isPaid: true
+      },
+      orderBy: { createdAt: "desc" },
+      take: 8
+    }) : Promise.resolve([]),
+    userId ? prisma.payment.findMany({
+      where: { userId },
+      select: {
+        amount: true,
+        status: true,
+        createdAt: true,
+        idea: {
+          select: {
+            title: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 10
+    }) : Promise.resolve([]),
+    userId ? prisma.payment.findMany({
+      where: {
+        userId,
+        status: "SUCCESS"
+      },
+      select: {
+        amount: true,
+        idea: {
+          select: {
+            id: true,
+            title: true,
+            isPaid: true,
+            category: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    }) : Promise.resolve([]),
+    userId ? prisma.comment.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.review.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.vote.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.watchlist.count({ where: { userId } }) : Promise.resolve(0),
+    userId ? prisma.watchlist.findMany({
+      where: { userId },
+      select: {
+        idea: {
+          select: {
+            category: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      },
+      take: 20
+    }) : Promise.resolve([])
+  ]);
+  const purchasedPaidIdeas = userPayments.filter((payment) => payment.idea.isPaid).length;
+  const totalPayments = userPaymentHistory.length;
+  const successfulPayments = userPaymentHistory.filter((payment) => payment.status === "SUCCESS").length;
+  const pendingPayments = userPaymentHistory.filter((payment) => payment.status === "PENDING").length;
+  const failedPayments = userPaymentHistory.filter((payment) => payment.status === "FAILED").length;
+  const createdIdeasCount = userCreatedIdeas.length;
+  const createdPaidIdeasCount = userCreatedIdeas.filter((idea) => idea.isPaid).length;
+  const totalSpent = userPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  const preferredCategorySet = /* @__PURE__ */ new Set([
+    ...userPayments.map((payment) => payment.idea.category.name),
+    ...userWatchlist.map((watchItem) => watchItem.idea.category.name)
+  ]);
+  const preferredCategories = Array.from(preferredCategorySet).slice(0, 6);
+  return {
+    counts: {
+      users: userCount,
+      categories: categoryCount,
+      ideas: ideaCount,
+      freeIdeas: freeIdeaCount,
+      paidIdeas: paidIdeaCount,
+      approvedIdeas: approvedIdeaCount,
+      comments: commentCount,
+      reviews: reviewCount,
+      votes: voteCount,
+      payments: paymentCount,
+      watchlist: watchlistCount
+    },
+    categories: categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      ideasCount: category._count.ideas
+    })),
+    matchedCategories: matchedCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      ideasCount: category._count.ideas
+    })),
+    matchedIdeas: matchedIdeas.map((idea) => ({
+      id: idea.id,
+      title: idea.title,
+      status: idea.status,
+      isPaid: idea.isPaid,
+      price: idea.price,
+      category: idea.category.name,
+      comments: idea._count.comments,
+      votes: idea._count.votes,
+      reviews: idea._count.reviews,
+      payments: idea._count.payments
+    })),
+    latestIdeas: latestIdeas.map((idea) => ({
+      title: idea.title,
+      status: idea.status,
+      category: idea.category.name
+    })),
+    freeIdeaSamples: freeIdeaSamples.map((idea) => ({
+      title: idea.title,
+      category: idea.category.name
+    })),
+    paidIdeaSamples: paidIdeaSamples.map((idea) => ({
+      title: idea.title,
+      category: idea.category.name,
+      price: idea.price
+    })),
+    user: {
+      id: userId || null,
+      totalPayments,
+      successfulPayments,
+      pendingPayments,
+      failedPayments,
+      paidPurchases: userPayments.length,
+      totalSpent,
+      purchasedPaidIdeas,
+      createdIdeasCount,
+      createdPaidIdeasCount,
+      commentsCount: userCommentsCount,
+      reviewsCount: userReviewsCount,
+      votesCount: userVotesCount,
+      watchlistCount: userWatchlistCount,
+      latestCreatedIdeas: userCreatedIdeas,
+      latestPayments: userPaymentHistory.map((payment) => ({
+        amount: payment.amount,
+        status: payment.status,
+        createdAt: payment.createdAt,
+        ideaTitle: payment.idea.title
+      })),
+      latestPurchasedIdeas: userPayments.map((payment) => payment.idea.title),
+      preferredCategories
+    }
+  };
+}
+async function getContextFromDB(message, userId) {
+  const snapshot = await getProjectSnapshot(message, userId);
+  const lines = [];
+  lines.push("EcoSpark database snapshot (user profile data excluded):");
+  lines.push(
+    `Counts -> users: ${snapshot.counts.users}, categories: ${snapshot.counts.categories}, ideas/projects: ${snapshot.counts.ideas}, free ideas: ${snapshot.counts.freeIdeas}, paid ideas: ${snapshot.counts.paidIdeas}, approved ideas: ${snapshot.counts.approvedIdeas}, comments: ${snapshot.counts.comments}, reviews: ${snapshot.counts.reviews}, votes: ${snapshot.counts.votes}, payments: ${snapshot.counts.payments}, watchlist: ${snapshot.counts.watchlist}.`
+  );
+  if (snapshot.categories.length > 0) {
+    lines.push(`Available categories: ${snapshot.categories.map((category) => category.name).join(", ")}`);
+  }
+  if (snapshot.matchedCategories.length > 0) {
+    lines.push("Matched categories:");
+    for (const category of snapshot.matchedCategories) {
+      lines.push(`- ${category.name} (ideas: ${category.ideasCount})`);
+    }
+  }
+  if (snapshot.matchedIdeas.length > 0) {
+    lines.push("Matched ideas/projects:");
+    for (const idea of snapshot.matchedIdeas) {
+      lines.push(
+        `- ${idea.title} | category: ${idea.category} | status: ${idea.status} | paid: ${idea.isPaid ? `yes (${idea.price})` : "no"} | comments: ${idea.comments}, votes: ${idea.votes}, reviews: ${idea.reviews}, payments: ${idea.payments}`
+      );
+    }
+  } else {
+    lines.push("No direct idea/project match found for this query.");
+  }
+  if (snapshot.latestIdeas.length > 0) {
+    lines.push("Latest ideas/projects in platform:");
+    for (const idea of snapshot.latestIdeas) {
+      lines.push(`- ${idea.title} | ${idea.category} | status: ${idea.status}`);
+    }
+  }
+  if (snapshot.freeIdeaSamples.length > 0) {
+    lines.push(`Free idea samples: ${snapshot.freeIdeaSamples.map((idea) => `${idea.title} (${idea.category})`).join(", ")}`);
+  }
+  if (snapshot.paidIdeaSamples.length > 0) {
+    lines.push(
+      `Paid idea samples: ${snapshot.paidIdeaSamples.map((idea) => `${idea.title} (${idea.category}, ${idea.price})`).join(", ")}`
+    );
+  }
+  if (snapshot.user.id) {
+    lines.push(
+      `Current user activity -> successful payments: ${snapshot.user.paidPurchases}, purchased paid ideas: ${snapshot.user.purchasedPaidIdeas}, comments: ${snapshot.user.commentsCount}, reviews: ${snapshot.user.reviewsCount}, votes: ${snapshot.user.votesCount}, watchlist: ${snapshot.user.watchlistCount}, total spent: ${snapshot.user.totalSpent}.`
+    );
+    if (snapshot.user.latestPurchasedIdeas.length > 0) {
+      lines.push(`Current user latest purchased ideas: ${snapshot.user.latestPurchasedIdeas.join(", ")}`);
+    }
+    if (snapshot.user.preferredCategories.length > 0) {
+      lines.push(`Current user preferred categories: ${snapshot.user.preferredCategories.join(", ")}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+// src/modules/CHTBOT/chat.planner.ts
+var OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+var PLANNER_MODEL = process.env.OPENROUTER_MODEL || "google/gemini-flash-1.5";
+var openrouterHeaders = () => ({
+  Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+  "Content-Type": "application/json",
+  "HTTP-Referer": process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:3000",
+  "X-Title": "EcoSpark Assistant"
+});
+var getModelName = (tableName) => {
+  const table = tableName.toLowerCase();
+  const map = {
+    ideas: "idea",
+    idea: "idea",
+    users: "user",
+    user: "user",
+    categories: "category",
+    category: "category",
+    payments: "payment",
+    payment: "payment",
+    comments: "comment",
+    comment: "comment",
+    reviews: "review",
+    review: "review",
+    votes: "vote",
+    vote: "vote",
+    watchlist: "watchlist"
+  };
+  return map[table] ?? null;
+};
+var plannerPrompt = `You are a Prisma ORM query planner for the EcoSpark idea-sharing platform.
+
+DATABASE SCHEMA:
+Table: ideas       -> fields: id, title, problem, solution, description, isPaid(Boolean), price(Float), status(DRAFT|UNDER_REVIEW|APPROVED|REJECTED), categoryId, authorId, createdAt
+Table: users       -> fields: id, name, email, role(MEMBER|MANAGER|ADMIN), isActive(Boolean), createdAt
+Table: categories  -> fields: id, name
+Table: payments    -> fields: id, userId, ideaId, amount(Float), status(PENDING|SUCCESS|FAILED), tranId, createdAt
+Table: comments    -> fields: id, text, userId, ideaId, parentId, createdAt
+Table: reviews     -> fields: id, rating(Int 1-5), comment, userId, ideaId, createdAt
+Table: votes       -> fields: id, type(UP|DOWN), userId, ideaId
+Table: watchlist   -> fields: id, userId, ideaId
+
+YOUR TASK:
+Look at the user's question and return a JSON array of database queries needed to answer it.
+
+QUERY OBJECT FORMAT:
+{
+  "action": "count" | "findMany" | "aggregate" | "groupCount",
+  "table": "<table name>",
+  "where": { <prisma where clause> },
+  "orderBy": { <field>: "asc"|"desc" },
+  "take": <number>,
+  "label": "<short description>"
+}
+
+RULES:
+- Return ONLY a valid JSON array
+- Return [] if question needs no DB data
+- Max 5 queries per request`;
+var parsePlannerOutput = (raw2) => {
+  const clean = raw2.replace(/```json|```/gi, "").trim();
+  const parsed = JSON.parse(clean);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+  return parsed.filter((item) => {
+    return Boolean(item) && typeof item === "object" && typeof item.action === "string" && typeof item.table === "string";
+  }).slice(0, 5);
+};
+var replaceUserPlaceholders = (value, userId) => {
+  if (!userId) {
+    return value;
+  }
+  if (typeof value === "string") {
+    if (value === "USER_ID" || value === "${userId}" || value === "USER_ID_PLACEHOLDER") {
+      return userId;
+    }
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => replaceUserPlaceholders(item, userId));
+  }
+  if (value && typeof value === "object") {
+    const result = {};
+    for (const [k, v] of Object.entries(value)) {
+      result[k] = replaceUserPlaceholders(v, userId);
+    }
+    return result;
+  }
+  return value;
+};
+var planDBQueries = async (message, history, userId) => {
+  const userContext = userId ? `The currently logged-in user's ID is: "${userId}". Use this for personal queries.` : "No user is logged in.";
+  const plannerPromptWithUser = `${plannerPrompt}
+
+${userContext}`;
+  try {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      headers: openrouterHeaders(),
+      body: JSON.stringify({
+        model: PLANNER_MODEL,
+        messages: [
+          { role: "system", content: plannerPromptWithUser },
+          ...history.slice(-4).map((h) => ({ role: h.role, content: h.content })),
+          { role: "user", content: message }
+        ]
+      })
+    });
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content ?? "[]";
+    return parsePlannerOutput(text);
+  } catch {
+    return [];
+  }
+};
+var runQueries = async (plan) => {
+  const results = [];
+  for (const query of plan) {
+    const modelName = getModelName(query.table);
+    if (!modelName) {
+      continue;
+    }
+    const delegate = prisma[modelName];
+    if (!delegate) {
+      continue;
+    }
+    const label = query.label || `${query.action}:${query.table}`;
+    const where = { ...query.where || {} };
+    if (where?.createdAt?.gte === "LAST_7_DAYS") {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() - 7);
+      where.createdAt.gte = d;
+    }
+    if (where?.createdAt?.gte === "LAST_30_DAYS") {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() - 30);
+      where.createdAt.gte = d;
+    }
+    try {
+      let data;
+      if (query.action === "count") {
+        data = await delegate.count({ where });
+      } else if (query.action === "findMany") {
+        if (modelName === "category") {
+          data = await delegate.findMany({
+            orderBy: { name: "asc" },
+            include: { _count: { select: { ideas: true } } }
+          });
+        } else if (modelName === "idea") {
+          data = await delegate.findMany({
+            where,
+            take: query.take || 10,
+            orderBy: query.orderBy || { createdAt: "desc" },
+            include: {
+              category: { select: { name: true } },
+              author: { select: { name: true } },
+              _count: { select: { votes: true, comments: true, reviews: true } }
+            }
+          });
+        } else if (modelName === "user") {
+          data = await delegate.findMany({
+            where,
+            take: query.take || 10,
+            orderBy: query.orderBy || { createdAt: "desc" },
+            select: { name: true, email: true, role: true, isActive: true, createdAt: true }
+          });
+        } else if (modelName === "payment") {
+          data = await delegate.findMany({
+            where,
+            take: query.take || 10,
+            orderBy: query.orderBy || { createdAt: "desc" },
+            include: {
+              user: { select: { name: true } },
+              idea: { select: { title: true } }
+            }
+          });
+        } else if (modelName === "review") {
+          data = await delegate.findMany({
+            where,
+            take: query.take || 10,
+            orderBy: query.orderBy || { rating: "desc" },
+            include: {
+              user: { select: { name: true } },
+              idea: { select: { title: true } }
+            }
+          });
+        } else {
+          data = await delegate.findMany({
+            where,
+            take: query.take || 10,
+            orderBy: query.orderBy || { createdAt: "desc" }
+          });
+        }
+      } else if (query.action === "aggregate") {
+        if (modelName === "payment") {
+          data = await delegate.aggregate({
+            where,
+            _sum: { amount: true },
+            _avg: { amount: true },
+            _count: true
+          });
+        } else if (modelName === "review") {
+          data = await delegate.aggregate({
+            where,
+            _avg: { rating: true },
+            _min: { rating: true },
+            _max: { rating: true },
+            _count: true
+          });
+        } else {
+          data = await delegate.aggregate({ where, _count: true });
+        }
+      } else {
+        if (modelName !== "idea") {
+          continue;
+        }
+        let grouped = await delegate.groupBy({
+          by: ["categoryId"],
+          _count: { id: true },
+          orderBy: { _count: { id: "desc" } }
+        });
+        const categories = await prisma.category.findMany({
+          select: { id: true, name: true }
+        });
+        grouped = grouped.map((item) => ({
+          category: categories.find((c) => c.id === item.categoryId)?.name || item.categoryId,
+          count: item._count.id
+        }));
+        data = grouped;
+      }
+      results.push({
+        label,
+        action: query.action,
+        table: query.table,
+        data
+      });
+    } catch {
+      continue;
+    }
+  }
+  return results;
+};
+var buildContext = (results) => {
+  if (!results.length) {
+    return "";
+  }
+  const lines = ["=== LIVE DATABASE DATA ==="];
+  for (const result of results) {
+    const data = result.data;
+    if (result.action === "count") {
+      lines.push(`- ${result.label}: ${data}`);
+      continue;
+    }
+    if (result.action === "aggregate") {
+      if (result.table === "payments" || result.table === "payment") {
+        lines.push(
+          `- ${result.label}: total=${data?._sum?.amount || 0}, avg=${data?._avg?.amount || 0}, tx=${data?._count || 0}`
+        );
+      } else if (result.table === "reviews" || result.table === "review") {
+        lines.push(
+          `- ${result.label}: avgRating=${data?._avg?.rating || "N/A"}, min=${data?._min?.rating || "N/A"}, max=${data?._max?.rating || "N/A"}, total=${data?._count || 0}`
+        );
+      } else {
+        lines.push(`- ${result.label}: ${JSON.stringify(data)}`);
+      }
+      continue;
+    }
+    if (result.action === "groupCount") {
+      lines.push(`- ${result.label}:`);
+      for (const item of data || []) {
+        lines.push(`  - ${item.category}: ${item.count}`);
+      }
+      continue;
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      lines.push(`- ${result.label}: no records found`);
+      continue;
+    }
+    if (result.table === "ideas" || result.table === "idea") {
+      lines.push(`- ${result.label}:`);
+      for (const idea of data.slice(0, 8)) {
+        lines.push(
+          `  - ${idea.title} | ${idea.isPaid ? `${idea.price} BDT` : "Free"} | ${idea.status} | ${idea.category?.name || "N/A"}`
+        );
+      }
+      continue;
+    }
+    if (result.table === "categories" || result.table === "category") {
+      lines.push(`- ${result.label}:`);
+      for (const category of data.slice(0, 12)) {
+        lines.push(`  - ${category.name}: ${category._count?.ideas || 0} ideas`);
+      }
+      continue;
+    }
+    lines.push(`- ${result.label}: ${JSON.stringify(data).slice(0, 400)}`);
+  }
+  return lines.join("\n");
+};
+var getPlannedDbContext = async (message, history, userId) => {
+  if (!process.env.OPENROUTER_API_KEY) {
+    return "";
+  }
+  const rawPlan = await planDBQueries(message, history, userId);
+  const plan = rawPlan.map((query) => ({
+    ...query,
+    where: replaceUserPlaceholders(query.where, userId)
+  }));
+  if (!plan.length) {
+    return "";
+  }
+  const results = await runQueries(plan);
+  return buildContext(results);
+};
+
+// src/modules/CHTBOT/chat.service.ts
+var OPENROUTER_URL2 = "https://openrouter.ai/api/v1/chat/completions";
+var DEFAULT_MODELS = [
+  "meta-llama/llama-3.1-8b-instruct:free",
+  "openai/gpt-4o-mini",
+  "google/gemini-2.0-flash-exp:free"
+];
+var writeSseData = (res, text) => {
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    res.write(`data: ${line}
+`);
+  }
+  res.write("\n");
+};
+var writeSseDone = (res) => {
+  res.write("data: [DONE]\n\n");
+};
+var sanitizeHistory = (history) => {
+  return history.filter((item) => typeof item?.content === "string" && typeof item?.role === "string").map((item) => ({
+    role: ["system", "user", "assistant"].includes(item.role) ? item.role : "user",
+    content: item.content
+  })).slice(-8);
+};
+var uniqueNonEmpty = (items) => {
+  return Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
+};
+var getTopCategoryNames = (snapshot, count = 3) => {
+  return [...snapshot.categories].sort((a, b) => b.ideasCount - a.ideasCount).slice(0, count).map((category) => category.name);
+};
+var buildFaqGuidance = (snapshot) => {
+  const paidIdeas = snapshot.counts.paidIdeas;
+  const freeIdeas = snapshot.counts.freeIdeas;
+  return [
+    "EcoSpark common tasks guide:",
+    "1) Registration/Login: /auth/register \u098F\u09AC\u0982 /auth/login \u09A5\u09C7\u0995\u09C7 account \u09A4\u09C8\u09B0\u09BF/\u09B2\u0997\u0987\u09A8 \u0995\u09B0\u09C1\u09A8\u0964",
+    `2) Idea explore: \u09AE\u09CB\u099F ${snapshot.counts.ideas} ideas \u0986\u099B\u09C7 (free ${freeIdeas}, paid ${paidIdeas})\u0964`,
+    "3) Paid idea access: payment complete \u09B9\u09B2\u09C7 paid idea access \u09AA\u09BE\u0993\u09DF\u09BE \u09AF\u09BE\u09DF\u0964",
+    "4) Engagement: vote, comment, review, watchlist \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09A4\u09C7 login \u09A5\u09BE\u0995\u09BE \u09A6\u09B0\u0995\u09BE\u09B0\u0964",
+    "5) Dashboard: role \u0985\u09A8\u09C1\u09AF\u09BE\u09DF\u09C0 Member/Manager/Admin panel use \u0995\u09B0\u09C1\u09A8\u0964"
+  ].join("\n");
+};
+var buildContentSuggestions = (snapshot) => {
+  const interestCategories = uniqueNonEmpty([
+    ...snapshot.user.preferredCategories,
+    ...snapshot.matchedCategories.map((category) => category.name),
+    ...getTopCategoryNames(snapshot, 3)
+  ]).slice(0, 3);
+  const seedIdeas = (snapshot.matchedIdeas.length > 0 ? snapshot.matchedIdeas.map((idea) => idea.title) : snapshot.latestIdeas.map((idea) => idea.title)).slice(0, 3);
+  const categoryText = interestCategories.length > 0 ? interestCategories.join(", ") : "Sustainability";
+  const ideaText = seedIdeas.length > 0 ? seedIdeas.join(", ") : "platform ideas";
+  return [
+    "AI content suggestions (dynamic):",
+    `- Blog topic: "${categoryText} \u098F top eco \u0989\u09A6\u09CD\u09AF\u09CB\u0997"`,
+    `- Community post idea: "${ideaText} \u09A8\u09BF\u09DF\u09C7 quick discussion"`,
+    `- Newsletter theme: "\u098F\u0987 \u09B8\u09AA\u09CD\u09A4\u09BE\u09B9\u09C7\u09B0 ${categoryText} updates"`
+  ].join("\n");
+};
+var buildNewsletterRecommendations = (snapshot) => {
+  const topCategories = getTopCategoryNames(snapshot, 3);
+  const userCategories = snapshot.user.preferredCategories.slice(0, 3);
+  const picked = uniqueNonEmpty([...userCategories, ...topCategories]).slice(0, 3);
+  const categoryText = picked.length > 0 ? picked.join(", ") : "General sustainability";
+  const trending = snapshot.latestIdeas.slice(0, 2).map((idea) => idea.title).join(", ") || "No recent ideas";
+  return [
+    "Smart email/newsletter recommendation:",
+    `- Audience focus: ${categoryText}`,
+    `- Include: ${trending}`,
+    `- CTA: \u09A8\u09A4\u09C1\u09A8 idea explore \u0995\u09B0\u09C1\u09A8 \u098F\u09AC\u0982 vote/comment \u09A6\u09BF\u09A8\u0964`,
+    `- Frequency suggestion: weekly digest`
+  ].join("\n");
+};
+var buildFullDatabaseSummaryAnswer = (message, snapshot) => {
+  const q = message.toLowerCase();
+  const asksDatabase = q.includes("database") || q.includes("db");
+  const asksAllInfo = q.includes("all") || q.includes("sob") || q.includes("\u09B8\u09AC") || q.includes("ja ja") || q.includes("information") || q.includes("info") || q.includes("infromation") || q.includes("details");
+  if (!asksDatabase || !asksAllInfo) {
+    return null;
+  }
+  const lines = [];
+  lines.push("EcoSpark full database summary:");
+  lines.push(`- users: ${snapshot.counts.users}`);
+  lines.push(`- categories: ${snapshot.counts.categories}`);
+  lines.push(
+    `- ideas: ${snapshot.counts.ideas} (free: ${snapshot.counts.freeIdeas}, paid: ${snapshot.counts.paidIdeas}, approved: ${snapshot.counts.approvedIdeas})`
+  );
+  lines.push(`- comments: ${snapshot.counts.comments}`);
+  lines.push(`- reviews: ${snapshot.counts.reviews}`);
+  lines.push(`- votes: ${snapshot.counts.votes}`);
+  lines.push(`- payments: ${snapshot.counts.payments}`);
+  lines.push(`- watchlist: ${snapshot.counts.watchlist}`);
+  if (snapshot.categories.length > 0) {
+    lines.push(`- category list: ${snapshot.categories.slice(0, 10).map((c) => c.name).join(", ")}`);
+  }
+  if (snapshot.latestIdeas.length > 0) {
+    lines.push(
+      `- latest ideas: ${snapshot.latestIdeas.slice(0, 6).map((idea) => `${idea.title} (${idea.category}, ${idea.status})`).join(", ")}`
+    );
+  }
+  if (snapshot.freeIdeaSamples.length > 0) {
+    lines.push(
+      `- free idea samples: ${snapshot.freeIdeaSamples.slice(0, 5).map((idea) => `${idea.title} (${idea.category})`).join(", ")}`
+    );
+  }
+  if (snapshot.paidIdeaSamples.length > 0) {
+    lines.push(
+      `- paid idea samples: ${snapshot.paidIdeaSamples.slice(0, 5).map((idea) => `${idea.title} (${idea.category}, price: ${idea.price})`).join(", ")}`
+    );
+  }
+  if (snapshot.user.id) {
+    lines.push(
+      `- your activity: payments ${snapshot.user.paidPurchases}, comments ${snapshot.user.commentsCount}, reviews ${snapshot.user.reviewsCount}, votes ${snapshot.user.votesCount}, watchlist ${snapshot.user.watchlistCount}, total spent ${snapshot.user.totalSpent}`
+    );
+  }
+  lines.push("\u0986\u09B0\u0993 \u09A8\u09BF\u09B0\u09CD\u09A6\u09BF\u09B7\u09CD\u099F \u0995\u09BF\u099B\u09C1 \u099A\u09BE\u0987\u09B2\u09C7 (\u09AF\u09C7\u09AE\u09A8 \u09B6\u09C1\u09A7\u09C1 reviews \u09AC\u09BE \u09B6\u09C1\u09A7\u09C1 users) \u0986\u09B2\u09BE\u09A6\u09BE \u0995\u09B0\u09C7 \u099C\u09BF\u099C\u09CD\u099E\u09C7\u09B8 \u0995\u09B0\u09C1\u09A8\u0964");
+  return lines.join("\n");
+};
+var buildPaidFreeIdeasAnswer = (message, snapshot) => {
+  const q = message.toLowerCase();
+  const asksFreeIdeas = q.includes("free ideas") || q.includes("free idea") || q.includes("free") || q.includes("\u09AB\u09CD\u09B0\u09BF");
+  const asksPaidIdeas = q.includes("paid ideas") || q.includes("paid idea") || q.includes("paid") || q.includes("\u09AA\u09C7\u0987\u09A1") || q.includes("payment") || q.includes("paymnet") || q.includes("purchase");
+  if (!asksFreeIdeas && !asksPaidIdeas) {
+    return null;
+  }
+  if (asksFreeIdeas && !asksPaidIdeas) {
+    const sampleText = snapshot.freeIdeaSamples.length > 0 ? snapshot.freeIdeaSamples.slice(0, 5).map((idea) => `${idea.title} (${idea.category})`).join(", ") : "\u098F\u0987 \u09AE\u09C1\u09B9\u09C2\u09B0\u09CD\u09A4\u09C7 free idea sample \u09AA\u09BE\u0993\u09DF\u09BE \u09AF\u09BE\u09DF\u09A8\u09BF";
+    return [
+      `Database \u0985\u09A8\u09C1\u09AF\u09BE\u09DF\u09C0 free ideas \u0986\u099B\u09C7 ${snapshot.counts.freeIdeas} \u099F\u09BF\u0964`,
+      `Free idea samples: ${sampleText}`
+    ].join("\n");
+  }
+  if (asksPaidIdeas && !asksFreeIdeas) {
+    const sampleText = snapshot.paidIdeaSamples.length > 0 ? snapshot.paidIdeaSamples.slice(0, 5).map((idea) => `${idea.title} (${idea.category}, price: ${idea.price})`).join(", ") : "\u098F\u0987 \u09AE\u09C1\u09B9\u09C2\u09B0\u09CD\u09A4\u09C7 paid idea sample \u09AA\u09BE\u0993\u09DF\u09BE \u09AF\u09BE\u09DF\u09A8\u09BF";
+    return [
+      `Database \u0985\u09A8\u09C1\u09AF\u09BE\u09DF\u09C0 paid ideas \u0986\u099B\u09C7 ${snapshot.counts.paidIdeas} \u099F\u09BF\u0964`,
+      `Total successful payments: ${snapshot.counts.payments} \u099F\u09BF\u0964`,
+      `Paid idea samples: ${sampleText}`
+    ].join("\n");
+  }
+  return [
+    `Free ideas: ${snapshot.counts.freeIdeas} \u099F\u09BF`,
+    `Paid ideas: ${snapshot.counts.paidIdeas} \u099F\u09BF`,
+    `Total successful payments: ${snapshot.counts.payments} \u099F\u09BF`
+  ].join("\n");
+};
+var buildOwnActivityAnswer = (message, snapshot) => {
+  const q = message.toLowerCase();
+  const hasSelfKeyword = q.includes("ami") || q.includes("amr") || q.includes("amar") || q.includes("my ") || q.includes("i ") || q.includes("id diye") || q.includes("my id");
+  if (!hasSelfKeyword) {
+    return null;
+  }
+  const asksOwnComment = q.includes("comment");
+  const asksOwnReview = q.includes("review") || q.includes("rating") || q.includes("riview");
+  const asksOwnVote = q.includes("vote") || q.includes("voting");
+  const asksOwnWatchlist = q.includes("watchlist") || q.includes("saved") || q.includes("bookmark");
+  const hasIdeaKeyword = q.includes("idea") || q.includes("ideas") || q.includes("project");
+  const hasCreateKeyword = q.includes("create") || q.includes("created") || q.includes("crate") || q.includes("creat") || q.includes("made") || q.includes("post") || q.includes("added") || q.includes("banai") || q.includes("banano") || q.includes("kora") || q.includes("korsi") || q.includes("korci") || q.includes("korchi") || q.includes("korechi") || q.includes("disi") || q.includes("dichi");
+  const asksOwnIdeas = hasIdeaKeyword && (hasCreateKeyword || q.includes("amar idea") || q.includes("my idea"));
+  const asksPaidInfo = q.includes("paid information") || q.includes("paid info") || q.includes("paid ideas");
+  const asksOwnPayment = q.includes("payment") || q.includes("paymnet") || q.includes("paid") || q.includes("purchase");
+  if (!asksOwnComment && !asksOwnReview && !asksOwnVote && !asksOwnWatchlist && !asksOwnIdeas && !asksOwnPayment && !asksPaidInfo) {
+    return null;
+  }
+  if (!snapshot.user.id) {
+    return [
+      "\u0986\u09AA\u09A8\u09BE\u09B0 personal activity check \u0995\u09B0\u09BE\u09B0 \u099C\u09A8\u09CD\u09AF login \u0995\u09B0\u09A4\u09C7 \u09B9\u09AC\u09C7\u0964",
+      'Login \u0995\u09B0\u09BE\u09B0 \u09AA\u09B0 \u0986\u09AC\u09BE\u09B0 \u099C\u09BF\u099C\u09CD\u099E\u09C7\u09B8 \u0995\u09B0\u09C1\u09A8: "\u0986\u09AE\u09BF \u0995\u09BF comment/review/vote/payment \u0995\u09B0\u09C7\u099B\u09BF?"'
+    ].join("\n");
+  }
+  const lines = ["\u0986\u09AA\u09A8\u09BE\u09B0 personal summary:"];
+  if (asksOwnIdeas) {
+    lines.push(
+      `- Created ideas: ${snapshot.user.createdIdeasCount} (paid created: ${snapshot.user.createdPaidIdeasCount})`
+    );
+    if (snapshot.user.latestCreatedIdeas.length > 0) {
+      lines.push(
+        `- Latest created ideas: ${snapshot.user.latestCreatedIdeas.slice(0, 5).map((idea) => `${idea.title} (${idea.isPaid ? "Paid" : "Free"}, ${idea.status})`).join(", ")}`
+      );
+    }
+    if (!asksOwnComment && !asksOwnReview && !asksOwnVote && !asksOwnWatchlist && !asksOwnPayment) {
+      lines.push(
+        `- Activity totals: comments ${snapshot.user.commentsCount}, reviews ${snapshot.user.reviewsCount}, votes ${snapshot.user.votesCount}, watchlist ${snapshot.user.watchlistCount}`
+      );
+      lines.push(
+        `- Payment totals: total ${snapshot.user.totalPayments}, success ${snapshot.user.successfulPayments}, pending ${snapshot.user.pendingPayments}, failed ${snapshot.user.failedPayments}, spent ${snapshot.user.totalSpent}`
+      );
+    }
+  }
+  if (asksOwnComment) {
+    lines.push(`- Comments: ${snapshot.user.commentsCount}`);
+  }
+  if (asksOwnReview) {
+    lines.push(`- Reviews: ${snapshot.user.reviewsCount}`);
+  }
+  if (asksOwnVote) {
+    lines.push(`- Votes: ${snapshot.user.votesCount}`);
+  }
+  if (asksOwnWatchlist) {
+    lines.push(`- Watchlist items: ${snapshot.user.watchlistCount}`);
+  }
+  if (asksOwnPayment || asksPaidInfo) {
+    lines.push(
+      `- Payment history: total ${snapshot.user.totalPayments}, success ${snapshot.user.successfulPayments}, pending ${snapshot.user.pendingPayments}, failed ${snapshot.user.failedPayments}`
+    );
+    lines.push(
+      `- Paid purchases: ${snapshot.user.purchasedPaidIdeas}, total spent: ${snapshot.user.totalSpent}`
+    );
+    if (snapshot.user.latestPayments.length > 0) {
+      lines.push(
+        `- Recent payments: ${snapshot.user.latestPayments.slice(0, 5).map((payment) => `${payment.ideaTitle} (${payment.amount}, ${payment.status})`).join(", ")}`
+      );
+    }
+  }
+  if (asksPaidInfo) {
+    lines.push(
+      `- Platform paid info: paid ideas ${snapshot.counts.paidIdeas}, free ideas ${snapshot.counts.freeIdeas}, total successful payments ${snapshot.counts.payments}`
+    );
+  }
+  if (lines.length === 1) {
+    return null;
+  }
+  return lines.join("\n");
+};
+var buildCoreModuleInstantAnswer = (message, snapshot) => {
+  const q = message.toLowerCase();
+  const hasSelfKeyword = q.includes("ami") || q.includes("amr") || q.includes("amar") || q.includes("my ") || q.includes("i ") || q.includes("id diye") || q.includes("my id");
+  const asksAllModules = q.includes("sob") || q.includes("\u09B8\u09AC") || q.includes("all") || q.includes("ja ja ase") || q.includes("module") || q.includes("database");
+  const wantsUsers = q.includes("user") || q.includes("koi jon") || q.includes("koy jon") || q.includes("koto jon");
+  const wantsCategories = q.includes("category") || q.includes("categories") || q.includes("catagory") || q.includes("catagori");
+  const wantsIdeas = q.includes("idea") || q.includes("ideas") || q.includes("koita") || q.includes("koyta");
+  const wantsComments = q.includes("comment");
+  const wantsReviews = q.includes("review") || q.includes("rating") || q.includes("riview");
+  const wantsVotes = q.includes("vote") || q.includes("voting");
+  const wantsPayments = q.includes("payment") || q.includes("paymnet") || q.includes("paid") || q.includes("purchase");
+  const wantsWatchlist = q.includes("watchlist");
+  const hasSpecificModule = wantsUsers || wantsCategories || wantsIdeas || wantsComments || wantsReviews || wantsVotes || wantsPayments || wantsWatchlist;
+  if (hasSelfKeyword) {
+    return null;
+  }
+  if (!asksAllModules && !hasSpecificModule) {
+    return null;
+  }
+  const lines = ["EcoSpark live database summary:"];
+  if (asksAllModules || wantsUsers) lines.push(`- users: ${snapshot.counts.users}`);
+  if (asksAllModules || wantsCategories) lines.push(`- categories: ${snapshot.counts.categories}`);
+  if (asksAllModules || wantsIdeas) {
+    lines.push(
+      `- ideas: ${snapshot.counts.ideas} (free: ${snapshot.counts.freeIdeas}, paid: ${snapshot.counts.paidIdeas}, approved: ${snapshot.counts.approvedIdeas})`
+    );
+  }
+  if (asksAllModules || wantsComments) lines.push(`- comments: ${snapshot.counts.comments}`);
+  if (asksAllModules || wantsReviews) lines.push(`- reviews: ${snapshot.counts.reviews}`);
+  if (asksAllModules || wantsVotes) lines.push(`- votes: ${snapshot.counts.votes}`);
+  if (asksAllModules || wantsPayments) lines.push(`- payments: ${snapshot.counts.payments}`);
+  if (asksAllModules || wantsWatchlist) lines.push(`- watchlist: ${snapshot.counts.watchlist}`);
+  if ((asksAllModules || wantsCategories) && snapshot.categories.length > 0) {
+    lines.push(`- top categories: ${snapshot.categories.slice(0, 8).map((c) => c.name).join(", ")}`);
+  }
+  if ((asksAllModules || wantsIdeas) && snapshot.latestIdeas.length > 0) {
+    lines.push(
+      `- latest ideas: ${snapshot.latestIdeas.slice(0, 5).map((idea) => `${idea.title} (${idea.category})`).join(", ")}`
+    );
+  }
+  return lines.join("\n");
+};
+var buildDynamicFallbackAnswer = (message, snapshot) => {
+  const q = message.toLowerCase();
+  const categoriesText = snapshot.categories.map((category) => category.name).join(", ") || "No categories yet";
+  const latestIdeasText = snapshot.latestIdeas.length > 0 ? snapshot.latestIdeas.map((idea) => `${idea.title} (${idea.category})`).join(", ") : "No ideas yet";
+  const fullDatabaseSummary = buildFullDatabaseSummaryAnswer(message, snapshot);
+  if (fullDatabaseSummary) {
+    return fullDatabaseSummary;
+  }
+  const ownActivityAnswer = buildOwnActivityAnswer(message, snapshot);
+  if (ownActivityAnswer) {
+    return ownActivityAnswer;
+  }
+  const paidFreeAnswer = buildPaidFreeIdeasAnswer(message, snapshot);
+  if (paidFreeAnswer) {
+    return paidFreeAnswer;
+  }
+  const coreModuleAnswer = buildCoreModuleInstantAnswer(message, snapshot);
+  if (coreModuleAnswer) {
+    return coreModuleAnswer;
+  }
+  const asksLoginHelp = q.includes("login") || q.includes("log in") || q.includes("signin") || q.includes("sign in") || q.includes("\u09B2\u0997\u0987\u09A8") || q.includes("login hoy na") || q.includes("\u09B9\u09DF \u09A8\u09BE");
+  if (asksLoginHelp) {
+    return [
+      "Login \u09B8\u09AE\u09B8\u09CD\u09AF\u09BE \u09B9\u09B2\u09C7 \u098F\u0987\u0997\u09C1\u09B2\u09CB check \u0995\u09B0\u09C1\u09A8:",
+      "1) Email/password \u09A0\u09BF\u0995 \u0986\u099B\u09C7 \u0995\u09BF \u09A8\u09BE (extra space \u099B\u09BE\u09DC\u09BE)",
+      "2) \u0986\u0997\u09C7 registration complete \u09B9\u09DF\u09C7\u099B\u09C7 \u0995\u09BF \u09A8\u09BE",
+      "3) Browser cookies/local storage clear \u0995\u09B0\u09C7 \u0986\u09AC\u09BE\u09B0 login",
+      "4) Backend server running \u0986\u099B\u09C7 \u0995\u09BF \u09A8\u09BE",
+      "5) \u09B8\u09AE\u09B8\u09CD\u09AF\u09BE \u09A5\u09BE\u0995\u09B2\u09C7 password reset \u09AC\u09BE \u09A8\u09A4\u09C1\u09A8 account \u09A6\u09BF\u09DF\u09C7 verify \u0995\u09B0\u09C1\u09A8"
+    ].join("\n");
+  }
+  const asksFaqSupport = q.includes("faq") || q.includes("help") || q.includes("support") || q.includes("guide") || q.includes("kibhabe") || q.includes("how to") || q.includes("booking") || q.includes("product info");
+  if (asksFaqSupport) {
+    return buildFaqGuidance(snapshot);
+  }
+  const asksContentSuggestion = q.includes("content") || q.includes("blog") || q.includes("post") || q.includes("suggest") || q.includes("recommend") || q.includes("idea for writing") || q.includes("newsletter topic");
+  if (asksContentSuggestion) {
+    return buildContentSuggestions(snapshot);
+  }
+  const asksNewsletterEmail = q.includes("newsletter") || q.includes("email") || q.includes("mail") || q.includes("digest") || q.includes("campaign");
+  if (asksNewsletterEmail) {
+    return buildNewsletterRecommendations(snapshot);
+  }
+  const blocks = [];
+  blocks.push(
+    `EcoSpark live stats -> ideas: ${snapshot.counts.ideas}, free: ${snapshot.counts.freeIdeas}, paid: ${snapshot.counts.paidIdeas}, categories: ${snapshot.counts.categories}, comments: ${snapshot.counts.comments}, reviews: ${snapshot.counts.reviews}, votes: ${snapshot.counts.votes}, payments: ${snapshot.counts.payments}.`
+  );
+  if (snapshot.matchedCategories.length > 0) {
+    blocks.push(
+      `Matched categories: ${snapshot.matchedCategories.map((category) => `${category.name} (${category.ideasCount})`).join(", ")}`
+    );
+  }
+  if (snapshot.matchedIdeas.length > 0) {
+    blocks.push(
+      `Matched ideas: ${snapshot.matchedIdeas.slice(0, 5).map((idea) => `${idea.title} [${idea.category}, ${idea.isPaid ? "paid" : "free"}]`).join(", ")}`
+    );
+  }
+  if (snapshot.user.id) {
+    const latestBought = snapshot.user.latestPurchasedIdeas.length > 0 ? snapshot.user.latestPurchasedIdeas.slice(0, 3).join(", ") : "no purchased ideas yet";
+    blocks.push(
+      `Your account summary -> successful payments: ${snapshot.user.paidPurchases}, purchased paid ideas: ${snapshot.user.purchasedPaidIdeas}, total spent: ${snapshot.user.totalSpent}, latest purchases: ${latestBought}.`
+    );
+  }
+  blocks.push(`Available categories: ${categoriesText}`);
+  blocks.push(`Latest ideas: ${latestIdeasText}`);
+  blocks.push("\u09AA\u09CD\u09B0\u09B6\u09CD\u09A8\u099F\u09BE \u098F\u0995\u099F\u09C1 specific \u0995\u09B0\u09B2\u09C7 \u0986\u09AE\u09BF \u0986\u09B0\u0993 \u09A8\u09BF\u09B0\u09CD\u09AD\u09C1\u09B2 \u0989\u09A4\u09CD\u09A4\u09B0 \u09A6\u09BF\u09A4\u09C7 \u09AA\u09BE\u09B0\u09AC\u0964");
+  return blocks.join("\n");
+};
+var buildProjectContextFallback = (projectContext) => {
+  if (!projectContext.trim()) {
+    return "\u0986\u09AE\u09BF \u098F\u0996\u09A8 live database access \u09AA\u09BE\u099A\u09CD\u099B\u09BF \u09A8\u09BE, \u0995\u09BF\u09A8\u09CD\u09A4\u09C1 EcoSpark \u098F auth, ideas, categories, comments, reviews, votes, payments, watchlist \u098F\u09AC\u0982 role-based dashboard modules \u0986\u099B\u09C7\u0964";
+  }
+  return `\u0986\u09AE\u09BF \u098F\u0996\u09A8 live database access \u09AA\u09BE\u099A\u09CD\u099B\u09BF \u09A8\u09BE\u0964 \u09A4\u09AC\u09C7 project context \u0985\u09A8\u09C1\u09AF\u09BE\u09DF\u09C0:
+${projectContext}`;
+};
+var getChatResponse = async (message, history, projectContext, currentUserId, res) => {
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+  const preferredModel = process.env.OPENROUTER_MODEL;
+  let snapshot = null;
+  try {
+    snapshot = await getProjectSnapshot(message, currentUserId);
+  } catch (error) {
+    console.error("Failed to load project snapshot:", error);
+  }
+  if (snapshot) {
+    const fullDatabaseSummary = buildFullDatabaseSummaryAnswer(message, snapshot);
+    if (fullDatabaseSummary) {
+      writeSseData(res, fullDatabaseSummary);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+    const ownActivityAnswer = buildOwnActivityAnswer(message, snapshot);
+    if (ownActivityAnswer) {
+      writeSseData(res, ownActivityAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+    const paidFreeAnswer = buildPaidFreeIdeasAnswer(message, snapshot);
+    if (paidFreeAnswer) {
+      writeSseData(res, paidFreeAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+    const coreModuleAnswer = buildCoreModuleInstantAnswer(message, snapshot);
+    if (coreModuleAnswer) {
+      writeSseData(res, coreModuleAnswer);
+      writeSseDone(res);
+      res.end();
+      return;
+    }
+  }
+  if (!apiKey) {
+    const fallback = snapshot ? buildDynamicFallbackAnswer(message, snapshot) : buildProjectContextFallback(projectContext);
+    writeSseData(res, fallback);
+    writeSseDone(res);
+    res.end();
+    return;
+  }
+  let dbContext = "";
+  try {
+    dbContext = await getPlannedDbContext(message, sanitizeHistory(history), currentUserId);
+    if (!dbContext) {
+      dbContext = await getContextFromDB(message, currentUserId);
+    }
+  } catch (error) {
+    console.error("Failed to build DB context:", error);
+  }
+  const systemPrompt = `You are EcoSpark assistant.
+Answer in the same language the user uses (Bangla or English).
+Keep responses short, clear, and practical.
+Prefer bullet points for list-style answers.
+Highlight key numbers in a noticeable style (for example: **12 \u099F\u09BF paid idea**).
+For personal queries, answer only using the current logged-in user's data when available.
+You can answer questions about platform data (ideas/projects, categories, comments, reviews, votes, payments, watchlist).
+You can also provide support guidance (FAQ/common tasks), AI content suggestions (blog/post/newsletter ideas), and smart newsletter recommendations aligned with live platform data and user interests.
+If the user asks about project features/pages/roles/flows, use the project context below.
+Never expose private user data like email, password, tokens, or personal identifiers.
+${projectContext ? `
+Project context:
+${projectContext}` : ""}
+${dbContext ? `
+Database context:
+${dbContext}` : ""}`;
+  const modelCandidates = preferredModel ? [preferredModel, ...DEFAULT_MODELS.filter((model) => model !== preferredModel)] : DEFAULT_MODELS;
+  let response = null;
+  let lastErrorBody = "";
+  for (const model of modelCandidates) {
+    const candidateResponse = await fetch(OPENROUTER_URL2, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        stream: true,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...sanitizeHistory(history),
+          { role: "user", content: message }
+        ]
+      })
+    });
+    if (candidateResponse.ok && candidateResponse.body) {
+      response = candidateResponse;
+      break;
+    }
+    lastErrorBody = await candidateResponse.text();
+    console.error(`OpenRouter model failed (${model}): ${candidateResponse.status} ${lastErrorBody}`);
+    if (candidateResponse.status !== 404) {
+      break;
+    }
+  }
+  if (!response || !response.body) {
+    if (lastErrorBody) {
+      console.error(`OpenRouter request failed after retries: ${lastErrorBody}`);
+    }
+    const fallback = snapshot ? buildDynamicFallbackAnswer(message, snapshot) : buildProjectContextFallback(projectContext);
+    writeSseData(res, fallback);
+    writeSseDone(res);
+    res.end();
+    return;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) {
+        continue;
+      }
+      const data = line.replace("data: ", "").trim();
+      if (!data) {
+        continue;
+      }
+      if (data === "[DONE]") {
+        writeSseDone(res);
+        res.end();
+        return;
+      }
+      try {
+        const json = JSON.parse(data);
+        const token = json.choices?.[0]?.delta?.content;
+        if (token) {
+          writeSseData(res, token);
+        }
+      } catch (err) {
+        console.error("Failed to parse OpenRouter stream chunk:", err);
+      }
+    }
+  }
+  writeSseDone(res);
+  res.end();
+};
+
+// src/modules/CHTBOT/chat.controller.ts
+var import_jsonwebtoken3 = __toESM(require("jsonwebtoken"));
+var chatHandler = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  let currentUserId;
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = import_jsonwebtoken3.default.verify(token, process.env.JWT_SECRET);
+      if (decoded?.userId) {
+        currentUserId = decoded.userId;
+      }
+    } catch {
+      currentUserId = void 0;
+    }
+  }
+  if (!currentUserId && typeof req.body?.userId === "string" && req.body.userId.trim()) {
+    currentUserId = req.body.userId.trim();
+  }
+  const { message, history = [], projectContext } = req.body;
+  if (!message || typeof message !== "string") {
+    res.status(400).json({ message: "message is required" });
+    return;
+  }
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  try {
+    await getChatResponse(
+      message,
+      Array.isArray(history) ? history : [],
+      typeof projectContext === "string" ? projectContext : "",
+      currentUserId,
+      res
+    );
+  } catch (error) {
+    console.error(error);
+    if (!res.headersSent) {
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+    }
+    res.write(
+      "data: \u09A6\u09C1\u0983\u0996\u09BF\u09A4, \u098F\u0996\u09A8 \u09B8\u09BE\u09B0\u09CD\u09AD\u09BE\u09B0 \u09A5\u09C7\u0995\u09C7 \u09AC\u09BF\u09B8\u09CD\u09A4\u09BE\u09B0\u09BF\u09A4 \u09A4\u09A5\u09CD\u09AF \u0986\u09A8\u09BE \u09AF\u09BE\u099A\u09CD\u099B\u09C7 \u09A8\u09BE\u0964 \u098F\u0995\u099F\u09C1 \u09AA\u09B0\u09C7 \u0986\u09AC\u09BE\u09B0 \u099A\u09C7\u09B7\u09CD\u099F\u09BE \u0995\u09B0\u09C1\u09A8\u0964\n\n"
+    );
+    res.write("data: [DONE]\n\n");
+    res.end();
+  }
+};
+
+// src/modules/CHTBOT/chat.router.ts
+var router11 = import_express11.default.Router();
+router11.post("/chat", chatHandler);
+var chat_router_default = router11;
+
 // src/app.ts
 import_dotenv.default.config();
-var app = (0, import_express10.default)();
+var app = (0, import_express12.default)();
 app.use((0, import_cors.default)());
 var PORT = process.env.PORT || 5e3;
 app.post(
   "/api/payments/webhook",
-  import_express10.default.raw({ type: "application/json" }),
+  import_express12.default.raw({ type: "application/json" }),
   handleWebhook2
 );
-app.use(import_express10.default.json({ limit: "25mb" }));
-app.use(import_express10.default.urlencoded({ extended: true, limit: "25mb" }));
+app.use(import_express12.default.json({ limit: "25mb" }));
+app.use(import_express12.default.urlencoded({ extended: true, limit: "25mb" }));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to EcoSpark API" });
 });
@@ -1910,6 +3394,9 @@ app.use("/api/categories", category_route_default);
 app.use("/api/admin", admin_route_default);
 app.use("/api/watchlist", watchlist_route_default);
 app.use("/api/payments", Payment_route_default);
+app.use("/api/stats", stats_route_default);
+app.use("/api/chatbot", chat_router_default);
+app.post("/api/chat", chatHandler);
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({ message: "This is protected", user: req.user });
 });
